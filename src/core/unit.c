@@ -1541,7 +1541,7 @@ static int unit_add_mount_dependencies(Unit *u) {
                                 return r;
                         changed = changed || r > 0;
 
-                        if (m->fragment_path) {
+                        if (m->fragment_path && !streq(m->id, "tmp.mount")) {
                                 r = unit_add_dependency(u, UNIT_REQUIRES, m, true, di.origin_mask);
                                 if (r < 0)
                                         return r;
