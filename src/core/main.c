@@ -92,7 +92,7 @@
 #include <sanitizer/lsan_interface.h>
 #endif
 
-#define DEFAULT_TASKS_MAX ((TasksMax) { 15U, 100U }) /* 15% */
+#define DEFAULT_TASKS_MAX ((TasksMax) { 80U, 100U }) /* 80% */
 
 static enum {
         ACTION_RUN,
