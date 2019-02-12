@@ -5,6 +5,7 @@ install_data(
         install_dir : udevrulesdir)
 
 rules = files('''
+        40-elevator.rules
         40-redhat.rules
         60-autosuspend.rules
         60-block.rules
