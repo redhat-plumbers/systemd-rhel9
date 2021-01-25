@@ -59,7 +59,7 @@
 #DefaultLimitFSIZE=
 #DefaultLimitDATA=
 #DefaultLimitSTACK=
-#DefaultLimitCORE=
+DefaultLimitCORE=0:infinity
 #DefaultLimitRSS=
 #DefaultLimitNOFILE=1024:{{HIGH_RLIMIT_NOFILE}}
 #DefaultLimitAS=
