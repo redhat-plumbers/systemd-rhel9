@@ -336,7 +336,7 @@ static int run(int argc, char *argv[]) {
                 }
 
                 if ((size_t) l < RFKILL_EVENT_SIZE_V1)
-                        return log_error_errno(SYNTHETIC_ERRNO(EIO), "Short read of struct rfkill_event: (%zd < %lu)",
+                        return log_error_errno(SYNTHETIC_ERRNO(EIO), "Short read of struct rfkill_event: (%zd < %d)",
                                                l, RFKILL_EVENT_SIZE_V1);
                 log_debug("Reading struct rfkill_event: got %zd bytes.", l);
 
