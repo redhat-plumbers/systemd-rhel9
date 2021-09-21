@@ -67,6 +67,7 @@ typedef enum TimestampStyle {
 #define FORMAT_TIMESTAMP_WIDTH 28U /* when outputting, assume this width */
 #define FORMAT_TIMESTAMP_RELATIVE_MAX 256U
 #define FORMAT_TIMESPAN_MAX 64U
+#define FORMAT_TIMESPAN(t, accuracy) format_timespan((char[FORMAT_TIMESPAN_MAX]){}, FORMAT_TIMESPAN_MAX, t, accuracy)
 
 #define TIME_T_MAX (time_t)((UINTMAX_C(1) << ((sizeof(time_t) << 3) - 1)) - 1)
 
