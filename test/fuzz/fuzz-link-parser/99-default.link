@@ -9,4 +9,4 @@
 
 [Link]
 NamePolicy=keep kernel database onboard slot path
-MACAddressPolicy=persistent
+MACAddressPolicy=none

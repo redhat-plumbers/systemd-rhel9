@@ -1117,7 +1117,7 @@
 
       <programlisting>[Link]
 NamePolicy=kernel database onboard slot path
-MACAddressPolicy=persistent</programlisting>
+MACAddressPolicy=none</programlisting>
     </example>
 
     <example>
