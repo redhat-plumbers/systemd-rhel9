@@ -389,10 +389,17 @@
           </listitem>
         </varlistentry>
 
+        <varlistentry>
+          <term><constant>rhel-9.0</constant></term>
+
+          <listitem><para>This is a copy of <constant>v249</constant> scheme with NAMING_REPLACE_STRICTLY
+          feature disabled.</para></listitem>
+        </varlistentry>
+
       </variablelist>
 
-    <para>Note that <constant>latest</constant> may be used to denote the latest scheme known (to this
-    particular version of systemd).</para>
+      <para>Note that <constant>latest</constant> may be used to denote the latest scheme known (to the latest
+      rhel-X.Y scheme).</para>
   </refsect1>
 
   <refsect1>

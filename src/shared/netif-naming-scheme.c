@@ -15,6 +15,7 @@ static const NamingScheme naming_schemes[] = {
         { "v247", NAMING_V247 },
         { "v249", NAMING_V249 },
         /* … add more schemes here, as the logic to name devices is updated … */
+        { "rhel-9.0", NAMING_RHEL_9_0 },
 };
 
 static const NamingScheme* naming_scheme_from_name(const char *name) {
