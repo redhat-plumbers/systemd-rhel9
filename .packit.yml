@@ -38,8 +38,7 @@ jobs:
   trigger: pull_request
   metadata:
     targets:
-    - fedora-rawhide-aarch64
-    - fedora-rawhide-i386
-    - fedora-rawhide-ppc64le
-    - fedora-rawhide-s390x
-    - fedora-rawhide-x86_64
+    - centos-stream-9-aarch64
+    - centos-stream-9-ppc64le
+    - centos-stream-9-s390x
+    - centos-stream-9-x86_64
