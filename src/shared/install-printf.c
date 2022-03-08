@@ -103,7 +103,7 @@ static int specifier_last_component(char specifier, const void *data, const char
         return 0;
 }
 
-int install_full_printf_internal(const UnitFileInstallInfo *i, const char *format, size_t max_length, const char *root, char **ret) {
+int install_name_printf(const UnitFileInstallInfo *i, const char *format, const char *root, char **ret) {
         /* This is similar to unit_name_printf() */
 
         const Specifier table[] = {
@@ -123,5 +123,5 @@ int install_full_printf_internal(const UnitFileInstallInfo *i, const char *forma
         assert(format);
         assert(ret);
 
-        return specifier_printf(format, max_length, table, root, i, ret);
+        return specifier_printf(format, UNIT_NAME_MAX, table, root, i, ret);
 }
