@@ -103,7 +103,12 @@ static int specifier_last_component(char specifier, const void *data, const char
         return 0;
 }
 
-int install_name_printf(const UnitFileInstallInfo *i, const char *format, const char *root, char **ret) {
+int install_name_printf(
+                UnitFileScope scope,
+                const UnitFileInstallInfo *i,
+                const char *format,
+                const char *root,
+                char **ret) {
         /* This is similar to unit_name_printf() */
 
         const Specifier table[] = {
@@ -115,7 +120,7 @@ int install_name_printf(const UnitFileInstallInfo *i, const char *format, const 
 
                 COMMON_SYSTEM_SPECIFIERS,
 
-                COMMON_CREDS_SPECIFIERS,
+                COMMON_CREDS_SPECIFIERS(scope),
                 {}
         };
 

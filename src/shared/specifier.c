@@ -21,6 +21,7 @@
 #include "specifier.h"
 #include "string-util.h"
 #include "strv.h"
+#include "unit-file.h"
 #include "user-util.h"
 
 /*
@@ -253,9 +254,15 @@ int specifier_os_image_version(char specifier, const void *data, const char *roo
 }
 
 int specifier_group_name(char specifier, const void *data, const char *root, const void *userdata, char **ret) {
+        UnitFileScope scope = PTR_TO_INT(data);
         char *t;
 
-        t = gid_to_name(getgid());
+        assert(ret);
+
+        if (scope == UNIT_FILE_GLOBAL)
+                return -EINVAL;
+
+        t = gid_to_name(scope == UNIT_FILE_USER ? getgid() : 0);
         if (!t)
                 return -ENOMEM;
 
@@ -264,23 +271,42 @@ int specifier_group_name(char specifier, const void *data, const char *root, con
 }
 
 int specifier_group_id(char specifier, const void *data, const char *root, const void *userdata, char **ret) {
-        if (asprintf(ret, UID_FMT, getgid()) < 0)
+        UnitFileScope scope = PTR_TO_INT(data);
+        gid_t gid;
+
+        assert(ret);
+
+        if (scope == UNIT_FILE_GLOBAL)
+                return -EINVAL;
+
+        gid = scope == UNIT_FILE_USER ? getgid() : 0;
+
+        if (asprintf(ret, UID_FMT, gid) < 0)
                 return -ENOMEM;
 
         return 0;
 }
 
 int specifier_user_name(char specifier, const void *data, const char *root, const void *userdata, char **ret) {
+        UnitFileScope scope = PTR_TO_INT(data);
+        uid_t uid;
         char *t;
 
-        /* If we are UID 0 (root), this will not result in NSS, otherwise it might. This is good, as we want to be able
-         * to run this in PID 1, where our user ID is 0, but where NSS lookups are not allowed.
+        assert(ret);
 
-         * We don't use getusername_malloc() here, because we don't want to look at $USER, to remain consistent with
-         * specifer_user_id() below.
+        if (scope == UNIT_FILE_GLOBAL)
+                return -EINVAL;
+
+        uid = scope == UNIT_FILE_USER ? getuid() : 0;
+
+        /* If we are UID 0 (root), this will not result in NSS, otherwise it might. This is good, as we want
+         * to be able to run this in PID 1, where our user ID is 0, but where NSS lookups are not allowed.
+
+         * We don't use getusername_malloc() here, because we don't want to look at $USER, to remain
+         * consistent with specifer_user_id() below.
          */
 
-        t = uid_to_name(getuid());
+        t = uid_to_name(uid);
         if (!t)
                 return -ENOMEM;
 
@@ -289,7 +315,17 @@ int specifier_user_name(char specifier, const void *data, const char *root, cons
 }
 
 int specifier_user_id(char specifier, const void *data, const char *root, const void *userdata, char **ret) {
-        if (asprintf(ret, UID_FMT, getuid()) < 0)
+        UnitFileScope scope = PTR_TO_INT(data);
+        uid_t uid;
+
+        assert(ret);
+
+        if (scope == UNIT_FILE_GLOBAL)
+                return -EINVAL;
+
+        uid = scope == UNIT_FILE_USER ? getuid() : 0;
+
+        if (asprintf(ret, UID_FMT, uid) < 0)
                 return -ENOMEM;
 
         return 0;
