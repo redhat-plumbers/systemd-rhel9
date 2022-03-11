@@ -142,6 +142,7 @@ BASICTOOLS=(
     echo
     env
     false
+    flock
     getconf
     getent
     getfacl
