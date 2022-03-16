@@ -640,7 +640,6 @@ static int bus_cgroup_set_transient_property(
                 if (!UNIT_WRITE_FLAGS_NOOP(flags)) {
                         _cleanup_free_ char *buf = NULL;
                         _cleanup_fclose_ FILE *f = NULL;
-                        char **entry;
                         size_t size = 0;
 
                         if (n == 0)
@@ -2050,7 +2049,6 @@ int bus_cgroup_set_property(
 
                 if (!UNIT_WRITE_FLAGS_NOOP(flags)) {
                         _cleanup_free_ char *joined = NULL;
-                        char **s;
 
                         if (strv_isempty(l)) {
                                 c->restrict_network_interfaces_is_allow_list = false;

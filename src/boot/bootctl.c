@@ -440,7 +440,6 @@ static int boot_entry_show(const BootEntry *e, bool show_as_default) {
         if (e->kernel)
                 boot_entry_file_list("linux", e->root, e->kernel, &status);
 
-        char **s;
         STRV_FOREACH(s, e->initrd)
                 boot_entry_file_list(s == e->initrd ? "initrd" : NULL,
                                      e->root,
@@ -669,7 +668,6 @@ static const char *const dollar_boot_subdirs[] = {
 };
 
 static int create_subdirs(const char *root, const char * const *subdirs) {
-        const char *const *i;
         int r;
 
         STRV_FOREACH(i, subdirs) {

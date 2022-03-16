@@ -1553,7 +1553,6 @@ static int manager_load_public_key_one(Manager *m, const char *path) {
 
 static int manager_load_public_keys(Manager *m) {
         _cleanup_strv_free_ char **files = NULL;
-        char **i;
         int r;
 
         assert(m);

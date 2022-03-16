@@ -1132,7 +1132,6 @@ void network_dump(Network *network, FILE *f) {
         Address *address;
         Route *route;
         const char *dhcp;
-        char **dns;
 
         assert(network);
         assert(f);

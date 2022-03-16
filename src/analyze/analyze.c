@@ -239,7 +239,6 @@ static int compare_unit_start(const UnitTimes *a, const UnitTimes *b) {
 
 static int process_aliases(char *argv[], char *tempdir, char ***ret) {
         _cleanup_strv_free_ char **filenames = NULL;
-        char **filename;
         int r;
 
         assert(argv);
@@ -961,7 +960,6 @@ static bool times_in_range(const UnitTimes *times, const BootTimes *boot) {
 
 static int list_dependencies_one(sd_bus *bus, const char *name, unsigned level, char ***units, unsigned branches) {
         _cleanup_strv_free_ char **deps = NULL;
-        char **c;
         int r;
         usec_t service_longest = 0;
         int to_print = 0;
@@ -1111,7 +1109,6 @@ static int analyze_critical_chain(int argc, char *argv[], void *userdata) {
              "The time the unit took to start is printed after the \"+\" character.\n");
 
         if (argc > 1) {
-                char **name;
                 STRV_FOREACH(name, strv_skip(argv, 1))
                         list_dependencies(bus, *name);
         } else
@@ -1207,7 +1204,6 @@ static int graph_one_property(
                 char *to_patterns[]) {
 
         _cleanup_strv_free_ char **units = NULL;
-        char **unit;
         int r;
         bool match_patterns;
 
@@ -1273,7 +1269,6 @@ static int graph_one(sd_bus *bus, const UnitInfo *u, char *patterns[], char *fro
 
 static int expand_patterns(sd_bus *bus, char **patterns, char ***ret) {
         _cleanup_strv_free_ char **expanded_patterns = NULL;
-        char **pattern;
         int r;
 
         STRV_FOREACH(pattern, patterns) {
@@ -1427,7 +1422,7 @@ static int dump(int argc, char *argv[], void *userdata) {
 }
 
 static int cat_config(int argc, char *argv[], void *userdata) {
-        char **arg, **list;
+        char **list;
         int r;
 
         pager_open(arg_pager_flags);
@@ -1476,7 +1471,6 @@ static int verb_log_control(int argc, char *argv[], void *userdata) {
 }
 
 static bool strv_fnmatch_strv_or_empty(char* const* patterns, char **strv, int flags) {
-        char **s;
         STRV_FOREACH(s, strv)
                 if (strv_fnmatch_or_empty(patterns, *s, flags))
                         return true;
@@ -1524,7 +1518,6 @@ static int do_unit_files(int argc, char *argv[], void *userdata) {
 static int dump_unit_paths(int argc, char *argv[], void *userdata) {
         _cleanup_(lookup_paths_free) LookupPaths paths = {};
         int r;
-        char **p;
 
         r = lookup_paths_init(&paths, arg_scope, 0, NULL);
         if (r < 0)
@@ -1737,7 +1730,6 @@ static int dump_syscall_filters(int argc, char *argv[], void *userdata) {
 
                 if (!set_isempty(known)) {
                         _cleanup_free_ char **l = NULL;
-                        char **syscall;
 
                         printf("\n"
                                "# %sUngrouped System Calls%s (known but not included in any of the groups except @known):\n",
@@ -1760,7 +1752,6 @@ static int dump_syscall_filters(int argc, char *argv[], void *userdata) {
                                 log_notice_errno(k, "# Not showing unlisted system calls, couldn't retrieve kernel system call list: %m");
                 } else if (!set_isempty(kernel)) {
                         _cleanup_free_ char **l = NULL;
-                        char **syscall;
 
                         printf("\n"
                                "# %sUnlisted System Calls%s (supported by the local kernel, but not included in any of the groups listed above):\n",
@@ -1775,9 +1766,7 @@ static int dump_syscall_filters(int argc, char *argv[], void *userdata) {
                         STRV_FOREACH(syscall, l)
                                 printf("#   %s\n", *syscall);
                 }
-        } else {
-                char **name;
-
+        } else
                 STRV_FOREACH(name, strv_skip(argv, 1)) {
                         const SyscallFilterSet *set;
 
@@ -1796,7 +1785,6 @@ static int dump_syscall_filters(int argc, char *argv[], void *userdata) {
                         dump_syscall_filter(set);
                         first = false;
                 }
-        }
 
         return 0;
 }
@@ -1944,7 +1932,6 @@ static int dump_filesystems(int argc, char *argv[], void *userdata) {
 
                 if (!set_isempty(known)) {
                         _cleanup_free_ char **l = NULL;
-                        char **filesystem;
 
                         printf("\n"
                                "# %sUngrouped filesystems%s (known but not included in any of the groups except @known):\n",
@@ -1987,7 +1974,6 @@ static int dump_filesystems(int argc, char *argv[], void *userdata) {
                         log_notice_errno(k, "# Not showing unlisted filesystems, couldn't retrieve kernel filesystem list: %m");
                 } else if (!set_isempty(kernel)) {
                         _cleanup_free_ char **l = NULL;
-                        char **filesystem;
 
                         printf("\n"
                                "# %sUnlisted filesystems%s (available to the local kernel, but not included in any of the groups listed above):\n",
@@ -2002,9 +1988,7 @@ static int dump_filesystems(int argc, char *argv[], void *userdata) {
                         STRV_FOREACH(filesystem, l)
                                 printf("#   %s\n", *filesystem);
                 }
-        } else {
-                char **name;
-
+        } else
                 STRV_FOREACH(name, strv_skip(argv, 1)) {
                         const FilesystemSet *set;
 
@@ -2023,7 +2007,6 @@ static int dump_filesystems(int argc, char *argv[], void *userdata) {
                         dump_filesystem_set(set);
                         first = false;
                 }
-        }
 
         return 0;
 }
@@ -2041,8 +2024,6 @@ static void parsing_hint(const char *p, bool calendar, bool timestamp, bool time
 }
 
 static int dump_timespan(int argc, char *argv[], void *userdata) {
-        char **input_timespan;
-
         STRV_FOREACH(input_timespan, strv_skip(argv, 1)) {
                 _cleanup_(table_unrefp) Table *table = NULL;
                 usec_t output_usecs;
@@ -2180,7 +2161,6 @@ static int test_timestamp_one(const char *p) {
 
 static int test_timestamp(int argc, char *argv[], void *userdata) {
         int ret = 0, r;
-        char **p;
 
         STRV_FOREACH(p, strv_skip(argv, 1)) {
                 r = test_timestamp_one(*p);
@@ -2312,7 +2292,6 @@ static int test_calendar_one(usec_t n, const char *p) {
 
 static int test_calendar(int argc, char *argv[], void *userdata) {
         int ret = 0, r;
-        char **p;
         usec_t n;
 
         if (arg_base_time != USEC_INFINITY)

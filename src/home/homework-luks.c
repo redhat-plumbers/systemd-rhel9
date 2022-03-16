@@ -303,7 +303,6 @@ static int luks_try_passwords(
                 size_t *volume_key_size,
                 key_serial_t *ret_key_serial) {
 
-        char **pp;
         int r;
 
         assert(h);
@@ -1721,7 +1720,6 @@ static int luks_format(
         _cleanup_free_ char *text = NULL;
         size_t volume_key_size;
         int slot = 0, r;
-        char **pp;
 
         assert(node);
         assert(dm_name);
@@ -3664,7 +3662,6 @@ static int luks_try_resume(
                 const char *dm_name,
                 char **password) {
 
-        char **pp;
         int r;
 
         assert(cd);

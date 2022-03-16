@@ -800,7 +800,6 @@ int sd_radv_set_dnssl(sd_radv *ra, uint32_t lifetime,
                                char **search_list) {
         _cleanup_free_ struct sd_radv_opt_dns *opt_dnssl = NULL;
         size_t len = 0;
-        char **s;
         uint8_t *p;
 
         assert_return(ra, -EINVAL);

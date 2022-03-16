@@ -110,7 +110,7 @@ static int add_enumerated_to_set(
         assert(s);
 
         LIST_FOREACH(enumerators, c, first) {
-                char **children = NULL, **k;
+                char **children = NULL;
                 sd_bus_slot *slot;
 
                 if (bus->nodes_modified)
@@ -2073,7 +2073,6 @@ static int emit_properties_changed_on_interface(
         struct vtable_member key = {};
         struct node_vtable *c;
         struct node *n;
-        char **property;
         void *u = NULL;
         int r;
 
@@ -2855,7 +2854,6 @@ static int interfaces_added_append_one(
 _public_ int sd_bus_emit_interfaces_added_strv(sd_bus *bus, const char *path, char **interfaces) {
         _cleanup_(sd_bus_message_unrefp) sd_bus_message *m = NULL;
         struct node *object_manager;
-        char **i;
         int r;
 
         assert_return(bus, -EINVAL);

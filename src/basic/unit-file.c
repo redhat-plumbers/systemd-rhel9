@@ -215,8 +215,7 @@ bool lookup_paths_timestamp_hash_same(const LookupPaths *lp, uint64_t timestamp_
 
         siphash24_init(&state, HASH_KEY.bytes);
 
-        char **dir;
-        STRV_FOREACH(dir, (char**) lp->search_path) {
+        STRV_FOREACH(dir, lp->search_path) {
                 struct stat st;
 
                 if (lookup_paths_mtime_exclude(lp, *dir))
@@ -388,7 +387,6 @@ int unit_file_build_name_map(
         _cleanup_hashmap_free_ Hashmap *ids = NULL, *names = NULL;
         _cleanup_set_free_free_ Set *paths = NULL;
         uint64_t timestamp_hash;
-        char **dir;
         int r;
 
         /* Before doing anything, check if the timestamp hash that was passed is still valid.
@@ -406,7 +404,7 @@ int unit_file_build_name_map(
                         return log_oom();
         }
 
-        STRV_FOREACH(dir, (char**) lp->search_path) {
+        STRV_FOREACH(dir, lp->search_path) {
                 _cleanup_closedir_ DIR *d = NULL;
 
                 d = opendir(*dir);
@@ -614,7 +612,7 @@ static int add_names(
                 Set **names,
                 const char *name) {
 
-        char **aliases, **alias;
+        char **aliases;
         int r;
 
         assert(name_type == UNIT_NAME_PLAIN || instance);

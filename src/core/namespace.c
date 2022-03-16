@@ -313,8 +313,6 @@ static void mount_entry_done(MountEntry *p) {
 }
 
 static int append_access_mounts(MountEntry **p, char **strv, MountMode mode, bool forcibly_require_prefix) {
-        char **i;
-
         assert(p);
 
         /* Adds a list of user-supplied READWRITE/READWRITE_IMPLICIT/READONLY/INACCESSIBLE entries */
@@ -349,8 +347,6 @@ static int append_access_mounts(MountEntry **p, char **strv, MountMode mode, boo
 }
 
 static int append_empty_dir_mounts(MountEntry **p, char **strv) {
-        char **i;
-
         assert(p);
 
         /* Adds tmpfs mounts to provide readable but empty directories. This is primarily used to implement the
@@ -417,7 +413,6 @@ static int append_extension_images(
                 size_t n) {
 
         _cleanup_strv_free_ char **overlays = NULL;
-        char **hierarchy;
         int r;
 
         assert(p);
@@ -1590,7 +1585,6 @@ static void normalize_mounts(const char *root_directory, MountEntry *mounts, siz
 }
 
 static int create_symlinks_from_tuples(const char *root, char **strv_symlinks) {
-        char **src, **dst;
         int r;
 
         STRV_FOREACH_PAIR(src, dst, strv_symlinks) {

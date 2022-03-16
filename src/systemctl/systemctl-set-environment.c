@@ -172,7 +172,6 @@ int import_environment(int argc, char *argv[], void *userdata) {
 
                 strv_env_clean_with_callback(copy, invalid_callback, NULL);
 
-                char **e;
                 STRV_FOREACH(e, copy)
                         if (string_has_cc(*e, NULL))
                                 log_notice("Environment variable $%.*s contains control characters, importing anyway.",
@@ -181,8 +180,6 @@ int import_environment(int argc, char *argv[], void *userdata) {
                 r = sd_bus_message_append_strv(m, copy);
 
         } else {
-                char **a, **b;
-
                 r = sd_bus_message_open_container(m, 'a', "s");
                 if (r < 0)
                         return bus_log_create_error(r);
