@@ -27,7 +27,6 @@ static void test_bus_set_address_system_remote(char **args) {
 
         assert_se(sd_bus_new(&b) >= 0);
         if (!strv_isempty(args)) {
-                char **a;
                 STRV_FOREACH(a, args)
                         test_one_address(b, *a, 0, NULL);
                 return;

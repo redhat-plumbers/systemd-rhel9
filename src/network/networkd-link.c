@@ -998,8 +998,6 @@ static void link_drop_requests(Link *link) {
 }
 
 static Link *link_drop(Link *link) {
-        char **n;
-
         if (!link)
                 return NULL;
 
@@ -2280,7 +2278,6 @@ static int link_update_mtu(Link *link, sd_netlink_message *message) {
 
 static int link_update_alternative_names(Link *link, sd_netlink_message *message) {
         _cleanup_strv_free_ char **altnames = NULL;
-        char **n;
         int r;
 
         assert(link);

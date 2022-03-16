@@ -430,7 +430,6 @@ void cgroup_context_dump(Unit *u, FILE* f, const char *prefix) {
         CGroupContext *c;
         CGroupSocketBindItem *bi;
         struct in_addr_prefix *iaai;
-        char **path;
 
         char cda[FORMAT_CGROUP_DIFF_MAX];
         char cdb[FORMAT_CGROUP_DIFF_MAX];

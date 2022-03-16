@@ -123,7 +123,6 @@ static int unmerge_hierarchy(const char *p) {
 
 static int unmerge(void) {
         int r, ret = 0;
-        char **p;
 
         STRV_FOREACH(p, arg_hierarchies) {
                 _cleanup_free_ char *resolved = NULL;
@@ -160,7 +159,6 @@ static int verb_unmerge(int argc, char **argv, void *userdata) {
 static int verb_status(int argc, char **argv, void *userdata) {
         _cleanup_(table_unrefp) Table *t = NULL;
         int r, ret = 0;
-        char **p;
 
         t = table_new("hierarchy", "extensions", "since");
         if (!t)
@@ -244,7 +242,6 @@ static int mount_overlayfs(
 
         _cleanup_free_ char *options = NULL;
         bool separator = false;
-        char **l;
         int r;
 
         assert(where);
@@ -284,7 +281,6 @@ static int merge_hierarchy(
         _cleanup_free_ char *resolved_hierarchy = NULL, *f = NULL, *buf = NULL;
         _cleanup_strv_free_ char **layers = NULL;
         struct stat st;
-        char **p;
         int r;
 
         assert(hierarchy);
@@ -452,7 +448,6 @@ static int merge_subprocess(Hashmap *images, const char *workspace) {
         size_t n_extensions = 0;
         unsigned n_ignored = 0;
         Image *img;
-        char **h;
         int r;
 
         /* Mark the whole of /run as MS_SLAVE, so that we can mount stuff below it that doesn't show up on
@@ -759,7 +754,6 @@ static int image_discover_and_read_metadata(Hashmap **ret_images) {
 
 static int verb_merge(int argc, char **argv, void *userdata) {
         _cleanup_(hashmap_freep) Hashmap *images = NULL;
-        char **p;
         int r;
 
         if (!have_effective_cap(CAP_SYS_ADMIN))

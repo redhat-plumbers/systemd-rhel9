@@ -12,7 +12,6 @@
 #include "systemctl.h"
 
 static int normalize_filenames(char **names) {
-        char **u;
         int r;
 
         STRV_FOREACH(u, names)
@@ -40,7 +39,6 @@ static int normalize_filenames(char **names) {
 }
 
 static int normalize_names(char **names, bool warn_if_path) {
-        char **u;
         bool was_path = false;
 
         STRV_FOREACH(u, names) {
@@ -139,7 +137,6 @@ int enable_unit(int argc, char *argv[], void *userdata) {
                 sd_bus *bus;
 
                 if (STR_IN_SET(verb, "mask", "unmask")) {
-                        char **name;
                         _cleanup_(lookup_paths_free) LookupPaths lp = {};
 
                         r = lookup_paths_init_or_warn(&lp, arg_scope, 0, arg_root);

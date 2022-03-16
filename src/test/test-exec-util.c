@@ -217,7 +217,7 @@ static int gather_stdout_one(int fd, void *arg) {
         return 0;
 }
 static int gather_stdout_two(int fd, void *arg) {
-        char ***s = arg, **t;
+        char ***s = arg;
 
         STRV_FOREACH(t, *s)
                 assert_se(write(fd, *t, strlen(*t)) == (ssize_t) strlen(*t));
@@ -287,7 +287,7 @@ TEST(stdout_gathering) {
 }
 
 TEST(environment_gathering) {
-        char template[] = "/tmp/test-exec-util.XXXXXXX", **p;
+        char template[] = "/tmp/test-exec-util.XXXXXXX";
         const char *dirs[] = {template, NULL};
         const char *name, *name2, *name3, *old;
         int r;

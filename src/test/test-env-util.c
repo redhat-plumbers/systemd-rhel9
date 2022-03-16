@@ -412,7 +412,6 @@ TEST(unsetenv_erase) {
         r = safe_fork("(sd-unsetenverase)", FORK_DEATHSIG|FORK_LOG|FORK_WAIT, NULL);
         if (r == 0) {
                 _cleanup_strv_free_ char **l = NULL;
-                char **e;
 
                 /* child */
 

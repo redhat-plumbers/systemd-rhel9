@@ -203,7 +203,6 @@ int bind_user_prepare(
 
         _cleanup_(bind_user_context_freep) BindUserContext *c = NULL;
         uid_t current_uid = MAP_UID_START;
-        char **n;
         int r;
 
         assert(custom_mounts);

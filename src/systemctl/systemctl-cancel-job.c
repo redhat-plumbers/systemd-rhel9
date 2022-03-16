@@ -10,7 +10,6 @@
 
 int cancel_job(int argc, char *argv[], void *userdata) {
         sd_bus *bus;
-        char **name;
         int r;
 
         if (argc <= 1) /* Shortcut to trivial_method() if no argument is given */

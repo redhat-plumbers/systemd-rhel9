@@ -510,7 +510,6 @@ int sd_dhcp6_client_set_request_mud_url(sd_dhcp6_client *client, const char *mud
 }
 
 int sd_dhcp6_client_set_request_user_class(sd_dhcp6_client *client, char * const *user_class) {
-        char * const *p;
         char **s;
 
         assert_return(client, -EINVAL);
@@ -532,7 +531,6 @@ int sd_dhcp6_client_set_request_user_class(sd_dhcp6_client *client, char * const
 }
 
 int sd_dhcp6_client_set_request_vendor_class(sd_dhcp6_client *client, char * const *vendor_class) {
-        char * const *p;
         char **s;
 
         assert_return(client, -EINVAL);
