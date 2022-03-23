@@ -451,7 +451,12 @@
         <varlistentry>
           <term><constant>rhel-9.0</constant></term>
 
-          <listitem><para>Same as naming scheme <constant>v250</constant>.</para>
+          <listitem><para>Since version <constant>v247</constant> we no longer set
+          <varname>ID_NET_NAME_SLOT</varname> if we detect that a PCI device associated with a slot is a PCI
+          bridge as that would create naming conflict when there are more child devices on that bridge. Now,
+          this is relaxed and we will use slot information to generate the name based on it but only if
+          the PCI device has multiple functions. This is safe because distinct function number is a part of
+          the device name for multifunction devices.</para>
           </listitem>
         </varlistentry>
 
