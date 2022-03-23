@@ -2917,7 +2917,6 @@ static int setup_credentials(
                 uid_t uid) {
 
         _cleanup_free_ char *p = NULL, *q = NULL;
-        const char *i;
         int r;
 
         assert(context);

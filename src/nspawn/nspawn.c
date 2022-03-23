@@ -2564,7 +2564,7 @@ static int setup_hostname(void) {
 
 static int setup_journal(const char *directory) {
         _cleanup_free_ char *d = NULL;
-        const char *dirname, *p, *q;
+        const char *p, *q;
         sd_id128_t this_id;
         bool try;
         int r;
@@ -3513,7 +3513,6 @@ static int inner_child(
         (void) fdset_close_others(fds);
 
         if (arg_start_mode == START_BOOT) {
-                const char *init;
                 char **a;
                 size_t m;
 
@@ -4604,7 +4603,7 @@ static int load_settings(void) {
         _cleanup_(settings_freep) Settings *settings = NULL;
         _cleanup_fclose_ FILE *f = NULL;
         _cleanup_free_ char *p = NULL;
-        const char *fn, *i;
+        const char *fn;
         int r;
 
         if (arg_oci_bundle)

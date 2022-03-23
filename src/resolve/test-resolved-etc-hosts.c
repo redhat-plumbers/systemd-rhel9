@@ -45,7 +45,6 @@ static void test_parse_etc_hosts(void) {
 
         int fd;
         _cleanup_fclose_ FILE *f;
-        const char *s;
 
         fd = mkostemp_safe(t);
         assert_se(fd >= 0);
