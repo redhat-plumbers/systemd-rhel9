@@ -122,7 +122,6 @@ typedef struct Event {
         EventState state;
 
         sd_device *dev;
-        sd_device *dev_kernel; /* clone of originally received device */
 
         uint64_t seqnum;
         uint64_t blocker_seqnum;
@@ -161,7 +160,6 @@ static Event *event_free(Event *event) {
 
         LIST_REMOVE(event, event->manager->events, event);
         sd_device_unref(event->dev);
-        sd_device_unref(event->dev_kernel);
 
         sd_event_source_unref(event->timeout_warning_event);
         sd_event_source_unref(event->timeout_event);
@@ -978,9 +976,8 @@ static int event_queue_start(Manager *manager) {
 }
 
 static int event_queue_insert(Manager *manager, sd_device *dev) {
-        _cleanup_(sd_device_unrefp) sd_device *clone = NULL;
-        Event *event;
         uint64_t seqnum;
+        Event *event;
         int r;
 
         assert(manager);
@@ -994,15 +991,6 @@ static int event_queue_insert(Manager *manager, sd_device *dev) {
         if (r < 0)
                 return r;
 
-        /* Save original device to restore the state on failures. */
-        r = device_shallow_clone(dev, &clone);
-        if (r < 0)
-                return r;
-
-        r = device_copy_properties(clone, dev);
-        if (r < 0)
-                return r;
-
         event = new(Event, 1);
         if (!event)
                 return -ENOMEM;
@@ -1010,7 +998,6 @@ static int event_queue_insert(Manager *manager, sd_device *dev) {
         *event = (Event) {
                 .manager = manager,
                 .dev = sd_device_ref(dev),
-                .dev_kernel = TAKE_PTR(clone),
                 .seqnum = seqnum,
                 .state = EVENT_QUEUED,
         };
@@ -1446,10 +1433,10 @@ static int on_sigchld(sd_event_source *s, const struct signalfd_siginfo *si, voi
                         device_tag_index(worker->event->dev, NULL, false);
 
                         if (manager->monitor) {
-                                /* Forward kernel event unchanged */
-                                r = device_monitor_send_device(manager->monitor, NULL, worker->event->dev_kernel);
+                                /* Forward kernel event to libudev listeners */
+                                r = device_monitor_send_device(manager->monitor, NULL, worker->event->dev);
                                 if (r < 0)
-                                        log_device_warning_errno(worker->event->dev_kernel, r,
+                                        log_device_warning_errno(worker->event->dev, r,
                                                                  "Failed to broadcast failed event to libudev listeners, ignoring: %m");
                         }
                 }
