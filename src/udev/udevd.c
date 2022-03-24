@@ -123,6 +123,7 @@ typedef struct Event {
 
         sd_device *dev;
 
+        sd_device_action_t action;
         uint64_t seqnum;
         uint64_t blocker_seqnum;
 
@@ -965,14 +966,11 @@ static int event_queue_start(Manager *manager) {
                 /* do not start event if parent or child event is still running or queued */
                 r = event_is_blocked(event);
                 if (r < 0) {
-                        sd_device_action_t a = _SD_DEVICE_ACTION_INVALID;
-
-                        (void) sd_device_get_action(event->dev, &a);
                         log_device_warning_errno(event->dev, r,
                                                  "Failed to check event dependency, "
                                                  "skipping event (SEQNUM=%"PRIu64", ACTION=%s)",
                                                  event->seqnum,
-                                                 strna(device_action_to_string(a)));
+                                                 strna(device_action_to_string(event->action)));
 
                         event_free(event);
                         return r;
@@ -989,6 +987,7 @@ static int event_queue_start(Manager *manager) {
 }
 
 static int event_queue_insert(Manager *manager, sd_device *dev) {
+        sd_device_action_t action;
         uint64_t seqnum;
         Event *event;
         int r;
@@ -1004,6 +1003,10 @@ static int event_queue_insert(Manager *manager, sd_device *dev) {
         if (r < 0)
                 return r;
 
+        r = sd_device_get_action(dev, &action);
+        if (r < 0)
+                return r;
+
         event = new(Event, 1);
         if (!event)
                 return -ENOMEM;
@@ -1012,6 +1015,7 @@ static int event_queue_insert(Manager *manager, sd_device *dev) {
                 .manager = manager,
                 .dev = sd_device_ref(dev),
                 .seqnum = seqnum,
+                .action = action,
                 .state = EVENT_QUEUED,
         };
 
