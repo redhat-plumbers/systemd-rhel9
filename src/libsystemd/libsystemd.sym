@@ -769,3 +769,9 @@ global:
         sd_event_add_inotify_fd;
         sd_event_source_set_ratelimit_expire_callback;
 } LIBSYSTEMD_249;
+
+LIBSYSTEMD_251 {
+global:
+        sd_device_new_from_devname;
+        sd_device_new_from_path;
+} LIBSYSTEMD_250;
