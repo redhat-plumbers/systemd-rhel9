@@ -92,7 +92,7 @@ static usec_t arg_fuzz = 0;
 static PagerFlags arg_pager_flags = 0;
 static BusTransport arg_transport = BUS_TRANSPORT_LOCAL;
 static const char *arg_host = NULL;
-static UnitFileScope arg_scope = UNIT_FILE_SYSTEM;
+static LookupScope arg_scope = LOOKUP_SCOPE_SYSTEM;
 static RecursiveErrors arg_recursive_errors = RECURSIVE_ERRORS_YES;
 static bool arg_man = true;
 static bool arg_generators = false;
@@ -171,7 +171,7 @@ typedef struct HostInfo {
 } HostInfo;
 
 static int acquire_bus(sd_bus **bus, bool *use_full_bus) {
-        bool user = arg_scope != UNIT_FILE_SYSTEM;
+        bool user = arg_scope != LOOKUP_SCOPE_SYSTEM;
         int r;
 
         if (use_full_bus && *use_full_bus) {
@@ -349,9 +349,9 @@ static int acquire_boot_times(sd_bus *bus, BootTimes **bt) {
                                        "Please try again later.\n"
                                        "Hint: Use 'systemctl%s list-jobs' to see active jobs",
                                        times.finish_time,
-                                       arg_scope == UNIT_FILE_SYSTEM ? "" : " --user");
+                                       arg_scope == LOOKUP_SCOPE_SYSTEM ? "" : " --user");
 
-        if (arg_scope == UNIT_FILE_SYSTEM && times.security_start_time > 0) {
+        if (arg_scope == LOOKUP_SCOPE_SYSTEM && times.security_start_time > 0) {
                 /* security_start_time is set when systemd is not running under container environment. */
                 if (times.initrd_time > 0)
                         times.kernel_done_time = times.initrd_time;
@@ -506,7 +506,7 @@ static int acquire_host_info(sd_bus *bus, HostInfo **hi) {
         if (!host)
                 return log_oom();
 
-        if (arg_scope != UNIT_FILE_SYSTEM) {
+        if (arg_scope != LOOKUP_SCOPE_SYSTEM) {
                 r = bus_connect_transport(arg_transport, arg_host, false, &system_bus);
                 if (r < 0) {
                         log_debug_errno(r, "Failed to connect to system bus, ignoring: %m");
@@ -684,7 +684,7 @@ static int analyze_plot(int argc, char *argv[], void *userdata) {
         _cleanup_(sd_bus_flush_close_unrefp) sd_bus *bus = NULL;
         _cleanup_(unit_times_free_arrayp) UnitTimes *times = NULL;
         _cleanup_free_ char *pretty_times = NULL;
-        bool use_full_bus = arg_scope == UNIT_FILE_SYSTEM;
+        bool use_full_bus = arg_scope == LOOKUP_SCOPE_SYSTEM;
         BootTimes *boot;
         UnitTimes *u;
         int n, m = 1, y = 0, r;
@@ -702,7 +702,7 @@ static int analyze_plot(int argc, char *argv[], void *userdata) {
         if (n < 0)
                 return n;
 
-        if (use_full_bus || arg_scope != UNIT_FILE_SYSTEM) {
+        if (use_full_bus || arg_scope != LOOKUP_SCOPE_SYSTEM) {
                 n = acquire_host_info(bus, &host);
                 if (n < 0)
                         return n;
@@ -2607,15 +2607,15 @@ static int parse_argv(int argc, char *argv[]) {
                         break;
 
                 case ARG_SYSTEM:
-                        arg_scope = UNIT_FILE_SYSTEM;
+                        arg_scope = LOOKUP_SCOPE_SYSTEM;
                         break;
 
                 case ARG_USER:
-                        arg_scope = UNIT_FILE_USER;
+                        arg_scope = LOOKUP_SCOPE_USER;
                         break;
 
                 case ARG_GLOBAL:
-                        arg_scope = UNIT_FILE_GLOBAL;
+                        arg_scope = LOOKUP_SCOPE_GLOBAL;
                         break;
 
                 case ARG_ORDER:
@@ -2756,12 +2756,12 @@ static int parse_argv(int argc, char *argv[]) {
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
                                        "Option --threshold= is only supported for security right now.");
 
-        if (arg_scope == UNIT_FILE_GLOBAL &&
+        if (arg_scope == LOOKUP_SCOPE_GLOBAL &&
             !STR_IN_SET(argv[optind] ?: "time", "dot", "unit-paths", "verify"))
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
                                        "Option --global only makes sense with verbs dot, unit-paths, verify.");
 
-        if (streq_ptr(argv[optind], "cat-config") && arg_scope == UNIT_FILE_USER)
+        if (streq_ptr(argv[optind], "cat-config") && arg_scope == LOOKUP_SCOPE_USER)
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
                                        "Option --user is not supported for cat-config right now.");
 
