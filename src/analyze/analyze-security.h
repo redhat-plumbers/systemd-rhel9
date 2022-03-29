@@ -18,7 +18,7 @@ typedef enum AnalyzeSecurityFlags {
 int analyze_security(sd_bus *bus,
                      char **units,
                      JsonVariant *policy,
-                     UnitFileScope scope,
+                     LookupScope scope,
                      bool check_man,
                      bool run_generators,
                      bool offline,
