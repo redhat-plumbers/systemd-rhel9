@@ -774,4 +774,5 @@ LIBSYSTEMD_251 {
 global:
         sd_device_new_from_devname;
         sd_device_new_from_path;
+        sd_device_open;
 } LIBSYSTEMD_250;
