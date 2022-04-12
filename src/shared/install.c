@@ -1904,7 +1904,7 @@ static int install_info_symlink_alias(
                 if (!alias_path)
                         return -ENOMEM;
 
-                q = create_symlink(lp, info->name, alias_path, force, changes, n_changes);
+                q = create_symlink(lp, info->path, alias_path, force, changes, n_changes);
                 r = r < 0 ? r : q;
         }
 
@@ -1973,7 +1973,7 @@ static int install_info_symlink_wants(
         }
 
         STRV_FOREACH(s, list) {
-                _cleanup_free_ char *dst = NULL;
+                _cleanup_free_ char *path = NULL, *dst = NULL;
 
                 q = install_name_printf(scope, info, *s, &dst);
                 if (q < 0) {
@@ -2003,15 +2003,11 @@ static int install_info_symlink_wants(
                         continue;
                 }
 
-                _cleanup_free_ char *path = strjoin(config_path, "/", dst, suffix, n);
+                path = strjoin(config_path, "/", dst, suffix, n);
                 if (!path)
                         return -ENOMEM;
 
-                _cleanup_free_ char *target = strjoin("../", info->name);
-                if (!target)
-                        return -ENOMEM;
-
-                q = create_symlink(lp, target, path, true, changes, n_changes);
+                q = create_symlink(lp, info->path, path, true, changes, n_changes);
                 if (r == 0)
                         r = q;
 
@@ -2919,7 +2915,7 @@ int unit_file_set_default(
                 return r;
 
         new_path = strjoina(lp.persistent_config, "/" SPECIAL_DEFAULT_TARGET);
-        return create_symlink(&lp, info->name, new_path, flags & UNIT_FILE_FORCE, changes, n_changes);
+        return create_symlink(&lp, info->path, new_path, flags & UNIT_FILE_FORCE, changes, n_changes);
 }
 
 int unit_file_get_default(
