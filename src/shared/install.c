@@ -2804,7 +2804,7 @@ static int normalize_linked_files(
          * but operates on real unit names. For each argument we we look up the actual path
          * where the unit is found. This way linked units can be reenabled successfully. */
 
-        _cleanup_free_ char **files = NULL, **names = NULL;
+        _cleanup_strv_free_ char **files = NULL, **names = NULL;
         int r;
 
         STRV_FOREACH(a, names_or_paths) {
