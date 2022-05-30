@@ -1,0 +1,76 @@
+# doc: https://docs.mergify.com
+---
+
+pull_request_rules:
+  - name: Add `needs-ci` label on CI fail
+    conditions:
+      - or:
+        # Build test
+        - -check-success=build (gcc, 10, bfd)
+        - -check-success=build (gcc, 11, gold)
+        - -check-success=build (clang, 11, bfd)
+        - -check-success=build (clang, 12, gold)
+        - -check-success=build (clang, 13, lld)
+        # Unit tests
+        - -check-success=build (GCC, auto)
+        - -check-success=build (GCC_ASAN_UBSAN, auto)
+        - -check-success=build (CLANG, auto)
+        - -check-success=build (CLANG_ASAN_UBSAN, auto)
+        - -check-success=build (GCC, openssl)
+        - -check-success=build (CLANG, gcrypt)
+        # CentOS CI
+        - -check-success=CentOS CI (CentOS Stream 9)
+        - -check-success=CentOS CI (CentOS Stream 9 + sanitizers)
+        # LGTM
+        - and:
+          - "-check-success=LGTM analysis: JavaScript"
+          - "-check-neutral=LGTM analysis: JavaScript"
+        - and:
+          - "-check-success=LGTM analysis: Python"
+          - "-check-neutral=LGTM analysis: Python"
+        - and:    
+          - "-check-success=LGTM analysis: C/C++"
+          - "-check-neutral=LGTM analysis: Python"
+      # Packit
+      - -check-success=rpm-build:centos-stream-9-aarch64
+      - -check-success=rpm-build:centos-stream-9-x86_64
+    actions:
+      label:
+        add:
+          - needs-ci
+          
+  - name: Remove `needs-ci` label on CI success
+    conditions:
+      # Build test
+      - check-success=build (gcc, 10, bfd)
+      - check-success=build (gcc, 11, gold)
+      - check-success=build (clang, 11, bfd)
+      - check-success=build (clang, 12, gold)
+      - check-success=build (clang, 13, lld)
+      # Unit tests
+      - check-success=build (GCC, auto)
+      - check-success=build (GCC_ASAN_UBSAN, auto)
+      - check-success=build (CLANG, auto)
+      - check-success=build (CLANG_ASAN_UBSAN, auto)
+      - check-success=build (GCC, openssl)
+      - check-success=build (CLANG, gcrypt)
+      # CentOS CI
+      - check-success=CentOS CI (CentOS Stream 9)
+      - check-success=CentOS CI (CentOS Stream 9 + sanitizers)
+      # LGTM
+      - or:
+        - "check-success=LGTM analysis: JavaScript"
+        - "check-neutral=LGTM analysis: JavaScript"
+      - or:
+        - "check-success=LGTM analysis: Python"
+        - "check-neutral=LGTM analysis: Python"
+      - or:    
+        - "check-success=LGTM analysis: C/C++"
+        - "check-neutral=LGTM analysis: Python"
+      # Packit
+      - check-success=rpm-build:centos-stream-9-aarch64
+      - check-success=rpm-build:centos-stream-9-x86_64
+    actions:
+      label:
+        remove:
+          - needs-ci  
