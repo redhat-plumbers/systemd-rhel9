@@ -170,6 +170,7 @@ DEFINE_STRING_TABLE_LOOKUP(path_state, PathState);
 static const char* const scope_state_table[_SCOPE_STATE_MAX] = {
         [SCOPE_DEAD] = "dead",
         [SCOPE_RUNNING] = "running",
+        [SCOPE_START_CHOWN] = "start-chown",
         [SCOPE_ABANDONED] = "abandoned",
         [SCOPE_STOP_SIGTERM] = "stop-sigterm",
         [SCOPE_STOP_SIGKILL] = "stop-sigkill",
