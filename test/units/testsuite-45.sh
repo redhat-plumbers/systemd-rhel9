@@ -258,7 +258,6 @@ EOF
 
 test_timezone
 test_adjtime
-test_ntp
 
 touch /testok
 rm /failed
