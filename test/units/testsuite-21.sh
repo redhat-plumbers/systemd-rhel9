@@ -27,18 +27,18 @@ systemctl log-level info
 # TODO
 #   * check for possibly newly introduced buses?
 BUS_LIST=(
-    org.freedesktop.home1
+#    org.freedesktop.home1
     org.freedesktop.hostname1
     org.freedesktop.import1
     org.freedesktop.locale1
     org.freedesktop.login1
     org.freedesktop.machine1
-    org.freedesktop.network1
-    org.freedesktop.portable1
+#    org.freedesktop.network1
+#    org.freedesktop.portable1
     org.freedesktop.resolve1
     org.freedesktop.systemd1
     org.freedesktop.timedate1
-    org.freedesktop.timesync1
+#    org.freedesktop.timesync1
 )
 
 # systemd-oomd requires PSI
