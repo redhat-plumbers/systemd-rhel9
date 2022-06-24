@@ -1404,7 +1404,7 @@ static int are_we_installed(void) {
         if (!p)
                 return log_oom();
 
-        log_debug("Checking whether %s contains any files…", p);
+        log_debug("Checking whether %s contains any files%s", p, special_glyph(SPECIAL_GLYPH_ELLIPSIS));
         r = dir_is_empty(p);
         if (r < 0 && r != -ENOENT)
                 return log_error_errno(r, "Failed to check whether %s contains any files: %m", p);
