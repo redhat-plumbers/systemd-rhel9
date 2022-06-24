@@ -26,6 +26,7 @@
 #include "fileio.h"
 #include "format-util.h"
 #include "fs-util.h"
+#include "glyph-util.h"
 #include "ipvlan.h"
 #include "missing_network.h"
 #include "netlink-util.h"
@@ -2122,7 +2123,8 @@ static int link_update_master(Link *link, sd_netlink_message *message) {
         else if (master_ifindex == 0)
                 log_link_debug(link, "Leaved from master interface: %i", link->master_ifindex);
         else
-                log_link_debug(link, "Master interface is changed: %i → %i", link->master_ifindex, master_ifindex);
+                log_link_debug(link, "Master interface changed: %i %s %i", link->master_ifindex,
+                               special_glyph(SPECIAL_GLYPH_ARROW_RIGHT), master_ifindex);
 
         link_drop_from_master(link);
 
@@ -2158,8 +2160,10 @@ static int link_update_hardware_address(Link *link, sd_netlink_message *message)
         if (link->hw_addr.length == 0)
                 log_link_debug(link, "Saved hardware address: %s", HW_ADDR_TO_STR(&addr));
         else {
-                log_link_debug(link, "Hardware address is changed: %s → %s",
-                               HW_ADDR_TO_STR(&link->hw_addr), HW_ADDR_TO_STR(&addr));
+                log_link_debug(link, "Hardware address is changed: %s %s %s",
+                               HW_ADDR_TO_STR(&link->hw_addr),
+                               special_glyph(SPECIAL_GLYPH_ARROW_RIGHT),
+                               HW_ADDR_TO_STR(&addr));
 
                 if (hashmap_get(link->manager->links_by_hw_addr, &link->hw_addr) == link)
                         hashmap_remove(link->manager->links_by_hw_addr, &link->hw_addr);
@@ -2256,8 +2260,9 @@ static int link_update_mtu(Link *link, sd_netlink_message *message) {
                 return 0;
 
         if (link->mtu != 0)
-                log_link_debug(link, "MTU is changed: %"PRIu32" → %"PRIu32" (min: %"PRIu32", max: %"PRIu32")",
-                               link->mtu, mtu, link->min_mtu, link->max_mtu);
+                log_link_debug(link, "MTU is changed: %"PRIu32" %s %"PRIu32" (min: %"PRIu32", max: %"PRIu32")",
+                               link->mtu, special_glyph(SPECIAL_GLYPH_ARROW_RIGHT), mtu,
+                               link->min_mtu, link->max_mtu);
 
         link->mtu = mtu;
 
