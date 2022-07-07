@@ -1670,8 +1670,6 @@ install_basic_tools() {
     image_install -o sushell
     # in Debian ldconfig is just a shell script wrapper around ldconfig.real
     image_install -o ldconfig.real
-    # for TEST-35-LOGIN
-    image_install -o evemu-device evemu-event
 }
 
 install_debug_tools() {
