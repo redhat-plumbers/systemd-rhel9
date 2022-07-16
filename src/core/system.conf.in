@@ -44,6 +44,7 @@
 #DefaultTimeoutStartSec=90s
 #DefaultTimeoutStopSec=90s
 #DefaultTimeoutAbortSec=
+#DefaultDeviceTimeoutSec=90s
 #DefaultRestartSec=100ms
 #DefaultStartLimitIntervalSec=10s
 #DefaultStartLimitBurst=5
