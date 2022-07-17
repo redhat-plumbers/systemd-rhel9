@@ -225,6 +225,8 @@ cleanup_session() (
     rm -rf /run/systemd/system/getty@tty2.service.d
     systemctl daemon-reload
 
+    loginctl disable-linger logind-test-user
+
     pkill -u "$(id -u logind-test-user)"
     sleep 1
     pkill -KILL -u "$(id -u logind-test-user)"
@@ -388,6 +390,23 @@ test_session_properties() {
     /usr/lib/systemd/tests/manual/test-session-properties "/org/freedesktop/login1/session/_3${s?}"
 }
 
+test_list_users() {
+    if [[ ! -c /dev/tty2 ]]; then
+        echo "/dev/tty2 does not exist, skipping test ${FUNCNAME[0]}."
+        return
+    fi
+
+    trap cleanup_session RETURN
+    create_session
+
+    assert_eq "$(loginctl list-users --no-legend | awk '$2 == "logind-test-user" { print $1 }')" "$(id -ru logind-test-user)"
+    assert_eq "$(loginctl  show-user --property Linger --value logind-test-user)" no
+
+    loginctl enable-linger logind-test-user
+
+    assert_eq "$(loginctl  show-user --property Linger --value logind-test-user)" yes
+}
+
 : >/failed
 
 setup_test_user
@@ -398,6 +417,7 @@ test_suspend_on_lid
 test_shutdown
 test_session
 test_session_properties
+test_list_users
 
 touch /testok
 rm /failed
