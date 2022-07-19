@@ -632,6 +632,7 @@ static int dns_query_synthesize_reply(DnsQuery *q, DnsTransactionState *state) {
         int r;
 
         assert(q);
+        assert(q->manager);
         assert(state);
 
         /* Tries to synthesize localhost RR replies (and others) where appropriate. Note that this is done *after* the
@@ -647,7 +648,7 @@ static int dns_query_synthesize_reply(DnsQuery *q, DnsTransactionState *state) {
                     DNS_TRANSACTION_NOT_FOUND))
                 return 0;
 
-        if (FLAGS_SET(q->flags, SD_RESOLVED_NO_SYNTHESIZE))
+        if (!q->manager->synthesize || FLAGS_SET(q->flags, SD_RESOLVED_NO_SYNTHESIZE))
                 return 0;
 
         r = dns_synthesize_answer(
