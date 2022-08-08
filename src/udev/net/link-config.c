@@ -259,7 +259,7 @@ int link_load_one(LinkConfigContext *ctx, const char *filename) {
                         dropin_dirname,
                         "Match\0Link\0",
                         config_item_perf_lookup, link_config_gperf_lookup,
-                        CONFIG_PARSE_WARN, config, NULL);
+                        CONFIG_PARSE_WARN, config, NULL, NULL);
         if (r < 0)
                 return r;
 

@@ -112,7 +112,8 @@ int config_parse_many(
                 const void *table,
                 ConfigParseFlags flags,
                 void *userdata,
-                Hashmap **ret_stats_by_path);   /* possibly NULL */
+                Hashmap **ret_stats_by_path,  /* possibly NULL */
+                char ***ret_drop_in_files);   /* possibly NULL */
 
 CONFIG_PARSER_PROTOTYPE(config_parse_int);
 CONFIG_PARSER_PROTOTYPE(config_parse_unsigned);
