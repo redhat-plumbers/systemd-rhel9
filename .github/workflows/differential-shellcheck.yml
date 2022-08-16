@@ -6,13 +6,13 @@ on:
   pull_request:
     branches:
       - main
+      - rhel-9.*.0
 
 permissions:
   contents: read
 
 jobs:
   lint:
-    if: github.event.repository.name != 'systemd-security'
     runs-on: ubuntu-latest
 
     permissions:
