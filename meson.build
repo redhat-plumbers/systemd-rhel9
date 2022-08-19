@@ -3001,12 +3001,6 @@ if conf.get('ENABLE_REPART') == 1
                 install : true,
                 install_dir : rootbindir)
         public_programs += exe
-
-        if want_tests != 'false'
-                test('test-repart',
-                     test_repart_sh,
-                     args : exe.full_path())
-        endif
 endif
 
 if conf.get('ENABLE_VCONSOLE') == 1

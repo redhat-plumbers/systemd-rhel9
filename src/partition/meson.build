@@ -3,5 +3,3 @@
 systemd_repart_sources = files('''
         repart.c
 '''.split())
-
-test_repart_sh = find_program('test-repart.sh')
