@@ -180,7 +180,7 @@ void debug_break(void);
 extern uint8_t _text, _data;
 /* Report the relocated position of text and data sections so that a debugger
  * can attach to us. See debug-sd-boot.sh for how this can be done. */
-#  define debug_hook(identity) Print(identity L"@0x%lx,0x%lx\n", POINTER_TO_PHYSICAL_ADDRESS(&_text), POINTER_TO_PHYSICAL_ADDRESS(&_data))
+#  define debug_hook(identity) printf(identity "@%p,%p\n", &_text, &_data)
 #else
 #  define debug_hook(identity)
 #endif
