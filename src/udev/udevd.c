@@ -129,8 +129,10 @@ typedef struct Event {
         sd_device_action_t action;
         uint64_t seqnum;
         uint64_t blocker_seqnum;
+        /* Used when the device is locked by another program. */
         usec_t retry_again_next_usec;
         usec_t retry_again_timeout_usec;
+        sd_event_source *retry_event_source;
 
         sd_event_source *timeout_warning_event;
         sd_event_source *timeout_event;
@@ -176,6 +178,9 @@ static Event *event_free(Event *event) {
         LIST_REMOVE(event, event->manager->events, event);
         sd_device_unref(event->dev);
 
+        /* Do not use sd_event_source_disable_unref() here, as this is called by both workers and the
+         * main process. */
+        sd_event_source_unref(event->retry_event_source);
         sd_event_source_unref(event->timeout_warning_event);
         sd_event_source_unref(event->timeout_event);
 
@@ -789,6 +794,8 @@ static int event_run(Event *event) {
 
         log_device_uevent(event->dev, "Device ready for processing");
 
+        (void) event_source_disable(event->retry_event_source);
+
         manager = event->manager;
         HASHMAP_FOREACH(worker, manager->workers) {
                 if (worker->state != WORKER_IDLE)
@@ -1039,6 +1046,11 @@ static int event_queue_start(Manager *manager) {
         return 0;
 }
 
+static int on_event_retry(sd_event_source *s, uint64_t usec, void *userdata) {
+        /* This does nothing. The on_post() callback will start the event if there exists an idle worker. */
+        return 1;
+}
+
 static int event_requeue(Event *event) {
         usec_t now_usec;
         int r;
@@ -1068,6 +1080,15 @@ static int event_requeue(Event *event) {
         event->retry_again_next_usec = usec_add(now_usec, EVENT_RETRY_INTERVAL_USEC);
         if (event->retry_again_timeout_usec == 0)
                 event->retry_again_timeout_usec = usec_add(now_usec, EVENT_RETRY_TIMEOUT_USEC);
+
+        r = event_reset_time_relative(event->manager->event, &event->retry_event_source,
+                                      CLOCK_MONOTONIC, EVENT_RETRY_INTERVAL_USEC, 0,
+                                      on_event_retry, NULL,
+                                      0, "retry-event", true);
+        if (r < 0)
+                return log_device_warning_errno(event->dev, r, "Failed to reset timer event source for retrying event, "
+                                                "skipping event (SEQNUM=%"PRIu64", ACTION=%s): %m",
+                                                event->seqnum, strna(device_action_to_string(event->action)));
 
         if (event->worker && event->worker->event == event)
                 event->worker->event = NULL;
