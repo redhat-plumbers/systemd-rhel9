@@ -8,7 +8,7 @@ on:
   pull_request:
     branches:
       - main
-      - v[0-9]+-stable
+      - rhel-*
     paths:
       - '**/meson.build'
       - '.github/**/codeql*'
@@ -18,7 +18,7 @@ on:
   push:
     branches:
       - main
-      - v[0-9]+-stable
+      - rhel-*
 
 permissions:
   contents: read
