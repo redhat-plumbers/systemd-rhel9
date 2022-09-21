@@ -22,24 +22,19 @@ pull_request_rules:
         # CentOS CI
         - -check-success=CentOS CI (CentOS Stream 9)
         - -check-success=CentOS CI (CentOS Stream 9 + sanitizers)
-        # LGTM
-        - and:
-          - "-check-success=LGTM analysis: JavaScript"
-          - "-check-neutral=LGTM analysis: JavaScript"
-        - and:
-          - "-check-success=LGTM analysis: Python"
-          - "-check-neutral=LGTM analysis: Python"
-        - and:    
-          - "-check-success=LGTM analysis: C/C++"
-          - "-check-neutral=LGTM analysis: C/C++"
+        # CodeQL
+        - -check-success=CodeQL
         # Packit
         - -check-success=rpm-build:centos-stream-9-aarch64
         - -check-success=rpm-build:centos-stream-9-x86_64
+        # Other
+        - -check-success=Lint Code Base
+        - -check-success=Differential ShellCheck
     actions:
       label:
         add:
           - needs-ci
-          
+
   - name: Remove `needs-ci` label on CI success
     conditions:
       - or:
@@ -61,20 +56,15 @@ pull_request_rules:
           # CentOS CI
           - check-success=CentOS CI (CentOS Stream 9)
           - check-success=CentOS CI (CentOS Stream 9 + sanitizers)
-          # LGTM
-          - or:
-            - "check-success=LGTM analysis: JavaScript"
-            - "check-neutral=LGTM analysis: JavaScript"
-          - or:
-            - "check-success=LGTM analysis: Python"
-            - "check-neutral=LGTM analysis: Python"
-          - or:    
-            - "check-success=LGTM analysis: C/C++"
-            - "check-neutral=LGTM analysis: C/C++"
+          # CodeQL
+          - check-success=CodeQL
           # Packit
           - check-success=rpm-build:centos-stream-9-aarch64
           - check-success=rpm-build:centos-stream-9-x86_64
+          # Other
+          - check-success=Lint Code Base
+          - check-success=Differential ShellCheck
     actions:
       label:
         remove:
-          - needs-ci  
+          - needs-ci

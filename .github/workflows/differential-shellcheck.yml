@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   lint:
+    name: Differential ShellCheck
     runs-on: ubuntu-latest
 
     permissions:
