@@ -42,6 +42,7 @@ typedef enum MountPointFlags {
         MOUNT_MAKEFS    = 1 << 3,
         MOUNT_GROWFS    = 1 << 4,
         MOUNT_RW_ONLY   = 1 << 5,
+        MOUNT_PCRFS     = 1 << 6,
 } MountPointFlags;
 
 typedef struct Mount {
@@ -238,9 +239,9 @@ static int add_swap(
                 return true;
         }
 
-        log_debug("Found swap entry what=%s makefs=%s growfs=%s noauto=%s nofail=%s",
+        log_debug("Found swap entry what=%s makefs=%s growfs=%s pcrfs=%s noauto=%s nofail=%s",
                   what,
-                  yes_no(flags & MOUNT_MAKEFS), yes_no(flags & MOUNT_GROWFS),
+                  yes_no(flags & MOUNT_MAKEFS), yes_no(flags & MOUNT_GROWFS), yes_no(flags & MOUNT_PCRFS),
                   yes_no(flags & MOUNT_NOAUTO), yes_no(flags & MOUNT_NOFAIL));
 
         r = unit_name_from_path(what, ".swap", &name);
@@ -291,6 +292,8 @@ static int add_swap(
         if (flags & MOUNT_GROWFS)
                 /* TODO: swap devices must be wiped and recreated */
                 log_warning("%s: growing swap devices is currently unsupported.", what);
+        if (flags & MOUNT_PCRFS)
+                log_warning("%s: measuring swap devices is currently unsupported.", what);
 
         if (!(flags & MOUNT_NOAUTO)) {
                 r = generator_add_symlink(arg_dest, SPECIAL_SWAP_TARGET,
@@ -642,6 +645,12 @@ static int add_mount(
                         return r;
         }
 
+        if (flags & MOUNT_PCRFS) {
+                r = generator_hook_up_pcrfs(dest, where, target_unit);
+                if (r < 0)
+                        return r;
+        }
+
         if (!FLAGS_SET(flags, MOUNT_AUTOMOUNT)) {
                 if (!FLAGS_SET(flags, MOUNT_NOAUTO) && strv_isempty(wanted_by) && strv_isempty(required_by)) {
                         r = generator_add_symlink(dest, target_unit,
@@ -784,6 +793,8 @@ static MountPointFlags fstab_options_to_flags(const char *options, bool is_swap)
                 flags |= MOUNT_MAKEFS;
         if (fstab_test_option(options, "x-systemd.growfs\0"))
                 flags |= MOUNT_GROWFS;
+        if (fstab_test_option(options, "x-systemd.pcrfs\0"))
+                flags |= MOUNT_PCRFS;
         if (fstab_test_yes_no_option(options, "noauto\0" "auto\0"))
                 flags |= MOUNT_NOAUTO;
         if (fstab_test_yes_no_option(options, "nofail\0" "fail\0"))
@@ -912,9 +923,9 @@ static int parse_fstab_one(
         }
 
 
-        log_debug("Found entry what=%s where=%s type=%s makefs=%s growfs=%s noauto=%s nofail=%s",
+        log_debug("Found entry what=%s where=%s type=%s makefs=%s growfs=%s pcrfs=%s noauto=%s nofail=%s",
                   what, where, strna(fstype),
-                  yes_no(flags & MOUNT_MAKEFS), yes_no(flags & MOUNT_GROWFS),
+                  yes_no(flags & MOUNT_MAKEFS), yes_no(flags & MOUNT_GROWFS), yes_no(flags & MOUNT_PCRFS),
                   yes_no(flags & MOUNT_NOAUTO), yes_no(flags & MOUNT_NOFAIL));
 
         bool is_sysroot = in_initrd() && path_equal(where, "/sysroot");
@@ -1127,7 +1138,7 @@ static int add_sysroot_mount(void) {
                          fstype,
                          opts,
                          is_device_path(what) ? 1 : 0, /* passno */
-                         0,                            /* makefs off, growfs off, noauto off, nofail off, automount off */
+                         0,                            /* makefs off, pcrfs off, noauto off, nofail off, automount off */
                          SPECIAL_INITRD_ROOT_FS_TARGET);
 }
 
