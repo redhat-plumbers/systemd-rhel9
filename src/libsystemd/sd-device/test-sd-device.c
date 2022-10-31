@@ -204,6 +204,7 @@ TEST(sd_device_enumerator_devices) {
         /* On CentOS CI, systemd-networkd-tests.py may be running when this test is invoked. The networkd
          * test creates and removes many network interfaces, and may interfere with this test. */
         assert_se(sd_device_enumerator_add_match_subsystem(e, "net", false) >= 0);
+        assert_se(sd_device_enumerator_add_match_subsystem(e, "misc", false) >= 0);
         FOREACH_DEVICE(e, d)
                 test_sd_device_one(d);
 }
