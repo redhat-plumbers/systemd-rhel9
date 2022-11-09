@@ -124,6 +124,7 @@ static inline void *mempcpy(void * restrict dest, const void * restrict src, siz
         memcpy(dest, src, n);
         return (uint8_t *) dest + n;
 }
+
 #else
 /* For unit testing. */
 int efi_memcmp(const void *p1, const void *p2, size_t n);
