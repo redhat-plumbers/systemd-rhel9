@@ -17,6 +17,7 @@ typedef enum ChaseSymlinksFlags {
                                      * right-most component refers to symlink, return O_PATH fd of the symlink. */
         CHASE_WARN        = 1 << 7, /* Emit an appropriate warning when an error is encountered.
                                      * Note: this may do an NSS lookup, hence this flag cannot be used in PID 1. */
+        CHASE_PROHIBIT_SYMLINKS  = 1 << 8, /* Refuse all symlinks */
 } ChaseSymlinksFlags;
 
 bool unsafe_transition(const struct stat *a, const struct stat *b);
