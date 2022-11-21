@@ -140,9 +140,6 @@ EFI_STATUS process_random_seed(EFI_FILE *root_dir) {
 
         validate_sha256();
 
-        if (mode == RANDOM_SEED_OFF)
-                return EFI_NOT_FOUND;
-
         /* hash = LABEL || sizeof(input1) || input1 || ... || sizeof(inputN) || inputN */
         sha256_init_ctx(&hash);
 
@@ -193,7 +190,7 @@ EFI_STATUS process_random_seed(EFI_FILE *root_dir) {
          * system, even when disk images are duplicated or swapped out. */
         size = 0;
         err = acquire_system_token(&system_token, &size);
-        if (mode != RANDOM_SEED_ALWAYS && (err != EFI_SUCCESS || size < DESIRED_SEED_SIZE) && !seeded_by_efi)
+        if ((err != EFI_SUCCESS || size < DESIRED_SEED_SIZE) && !seeded_by_efi)
                 return err;
         sha256_process_bytes(&size, sizeof(size), &hash);
         if (system_token) {
