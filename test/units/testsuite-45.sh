@@ -201,6 +201,11 @@ wait_mon() {
 }
 
 test_ntp() {
+    if ! systemctl list-unit-files -q systemd-timesyncd.service; then
+        echo "systemd-timesyncd is not available, skipping the test..."
+        return 0
+    fi
+
     # timesyncd has ConditionVirtualization=!container by default; drop/mock that for testing
     if systemd-detect-virt --container --quiet; then
         systemctl disable --quiet --now systemd-timesyncd
