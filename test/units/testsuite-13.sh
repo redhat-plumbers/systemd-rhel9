@@ -74,7 +74,7 @@ function check_rootidmap {
             --register=no -D "$_root" \
             --bind=/tmp/rootidmapdir:/mnt:rootidmap \
             /bin/sh -c "$_command" |& tee nspawn.out; then
-        if grep -q "Failed to map ids for bind mount.*: Function not implemented" nspawn.out; then
+        if grep -Eq "Failed to map ids for bind mount.*: (Function not implemented|Operation not permitted)" nspawn.out; then
             echo "idmapped mounts are not supported, skipping the test..."
             return 0
         fi
