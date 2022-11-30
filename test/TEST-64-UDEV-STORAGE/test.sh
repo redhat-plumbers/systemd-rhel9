@@ -310,6 +310,11 @@ EOF
 
 # Test case for issue https://github.com/systemd/systemd/issues/19946
 testcase_simultaneous_events() {
+    if ! "$BUILD_DIR/udevadm" lock --version >/dev/null; then
+        echo "This test is flaky without udevadm wait/lock, skipping the test..."
+        return 77
+    fi
+
     local qemu_opts=("-device virtio-scsi-pci,id=scsi")
     local partdisk="${TESTDIR:?}/simultaneousevents.img"
 
