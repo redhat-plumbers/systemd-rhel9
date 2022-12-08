@@ -8,7 +8,7 @@ on:
   pull_request:
     branches:
       - main
-      - v[0-9]+-stable
+      - rhel-9.*.0
 
 permissions:
   contents: read
