@@ -2,8 +2,51 @@
 ---
 
 pull_request_rules:
-  - name: Add `needs-ci` label on CI fail
+  - name: Add `needs-ci` label on CI fail - v252
     conditions:
+      # Policy is relevant for rhel-9.2.0 branches and newer & main branch
+      - base~=^main$|^rhel-9.([2-9]|\d{2,}).0$
+      - label!=ci-waived
+      - or:
+        # Build test
+        - -check-success=build (gcc, 11, bfd, gcrypt)
+        - -check-success=build (gcc, 12, gold, openssl)
+        - -check-success=build (clang, 13, mold, gcrypt) 
+        - -check-success=build (clang, 14, lld, openssl)
+        - -check-success=build (clang, 15, bfd, auto)
+        # Unit tests
+        - -check-success=build (GCC, auto)
+        - -check-success=build (GCC_ASAN_UBSAN, auto)
+        - -check-success=build (CLANG, auto)
+        - -check-success=build (CLANG_RELEASE, auto)
+        - -check-success=build (CLANG_ASAN_UBSAN, auto)
+        - -check-success=build (CLANG_ASAN_UBSAN_NO_DEPS, auto)
+        - -check-success=build (GCC, openssl)
+        - -check-success=build (CLANG, gcrypt)
+        # ClusterFuzzingLite
+        - -check-success=PR (address) 
+        - -check-success=PR (undefined)
+        - -check-success=PR (memory)
+        # CentOS CI
+        - -check-success=CentOS CI (CentOS Stream 9)
+        - -check-success=CentOS CI (CentOS Stream 9 + sanitizers)
+        # CodeQL
+        - -check-success=CodeQL
+        # Packit
+        - -check-success=rpm-build:centos-stream-9-aarch64
+        - -check-success=rpm-build:centos-stream-9-x86_64
+        # Other
+        - -check-success=Lint Code Base
+        - -check-success=Differential ShellCheck
+    actions:
+      label:
+        add:
+          - needs-ci
+
+  - name: Add `needs-ci` label on CI fail - v250
+    conditions:
+      # Policy is relevant branches before rhel-9.2.0
+      - base~=^rhel-9.0.0-beta$|^rhel-9.[0-1].0$
       - label!=ci-waived
       - or:
         # Build test
@@ -22,21 +65,60 @@ pull_request_rules:
         # CentOS CI
         - -check-success=CentOS CI (CentOS Stream 9)
         - -check-success=CentOS CI (CentOS Stream 9 + sanitizers)
-        # CodeQL
-        - -check-success=CodeQL
         # Packit
         - -check-success=rpm-build:centos-stream-9-aarch64
         - -check-success=rpm-build:centos-stream-9-x86_64
-        # Other
-        - -check-success=Lint Code Base
-        - -check-success=Differential ShellCheck
     actions:
       label:
         add:
           - needs-ci
 
-  - name: Remove `needs-ci` label on CI success
+  - name: Remove `needs-ci` label on CI success - v252
     conditions:
+      # Policy is relevant for rhel-9.2.0 branches and newer & main branch
+      - base~=^main$|^rhel-9.([2-9]|\d{2,}).0$
+      - or:
+        - label=ci-waived
+        - and:
+          # Build test
+          - check-success=build (gcc, 11, bfd, gcrypt)
+          - check-success=build (gcc, 12, gold, openssl)
+          - check-success=build (clang, 13, mold, gcrypt) 
+          - check-success=build (clang, 14, lld, openssl)
+          - check-success=build (clang, 15, bfd, auto)
+          # Unit tests
+          - check-success=build (GCC, auto)
+          - check-success=build (GCC_ASAN_UBSAN, auto)
+          - check-success=build (CLANG, auto)
+          - check-success=build (CLANG_RELEASE, auto)
+          - check-success=build (CLANG_ASAN_UBSAN, auto)
+          - check-success=build (CLANG_ASAN_UBSAN_NO_DEPS, auto)
+          - check-success=build (GCC, openssl)
+          - check-success=build (CLANG, gcrypt)
+          # ClusterFuzzingLite
+          - check-success=PR (address) 
+          - check-success=PR (undefined)
+          - check-success=PR (memory)
+          # CentOS CI
+          - check-success=CentOS CI (CentOS Stream 9)
+          - check-success=CentOS CI (CentOS Stream 9 + sanitizers)
+          # CodeQL
+          - check-success=CodeQL
+          # Packit
+          - check-success=rpm-build:centos-stream-9-aarch64
+          - check-success=rpm-build:centos-stream-9-x86_64
+          # Other
+          - check-success=Lint Code Base
+          - check-success=Differential ShellCheck
+    actions:
+      label:
+        remove:
+          - needs-ci
+
+  - name: Remove `needs-ci` label on CI success - v250
+    conditions:
+      # Policy is relevant branches before rhel-9.2.0
+      - base~=^rhel-9.0.0-beta$|^rhel-9.[0-1].0$
       - or:
         - label=ci-waived
         - and:
@@ -56,14 +138,9 @@ pull_request_rules:
           # CentOS CI
           - check-success=CentOS CI (CentOS Stream 9)
           - check-success=CentOS CI (CentOS Stream 9 + sanitizers)
-          # CodeQL
-          - check-success=CodeQL
           # Packit
           - check-success=rpm-build:centos-stream-9-aarch64
           - check-success=rpm-build:centos-stream-9-x86_64
-          # Other
-          - check-success=Lint Code Base
-          - check-success=Differential ShellCheck
     actions:
       label:
         remove:
