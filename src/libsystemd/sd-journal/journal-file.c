@@ -25,6 +25,7 @@
 #include "journal-file.h"
 #include "lookup3.h"
 #include "memory-util.h"
+#include "missing_threads.h"
 #include "path-util.h"
 #include "random-util.h"
 #include "set.h"
