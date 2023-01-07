@@ -3,6 +3,7 @@
 #include <efi.h>
 #include <efilib.h>
 
+#include "memory-util-fundamental.h"
 #include "missing_efi.h"
 #include "random-seed.h"
 #include "secure-boot.h"
