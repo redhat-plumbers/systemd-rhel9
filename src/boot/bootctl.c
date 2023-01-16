@@ -14,6 +14,7 @@
 
 #include "alloc-util.h"
 #include "blkid-util.h"
+#include "bootctl-uki.h"
 #include "bootspec.h"
 #include "chase-symlinks.h"
 #include "copy.h"
@@ -1453,6 +1454,8 @@ static int help(int argc, char *argv[], void *userdata) {
                "  remove              Remove systemd-boot from the ESP and EFI variables\n"
                "  is-installed        Test whether systemd-boot is installed in the ESP\n"
                "  random-seed         Initialize random seed in ESP and EFI variables\n"
+               "\n%3$skernel Commands:%4$s\n"
+               "  kernel-identify     Identify kernel image type.\n"
                "\n%3$sOptions:%4$s\n"
                "  -h --help            Show this help\n"
                "     --version         Print version\n"
@@ -2567,6 +2570,7 @@ static int bootctl_main(int argc, char *argv[]) {
                 { "update",              VERB_ANY, 1,        0,            verb_install             },
                 { "remove",              VERB_ANY, 1,        0,            verb_remove              },
                 { "is-installed",        VERB_ANY, 1,        0,            verb_is_installed        },
+                { "kernel-identify",     2,        2,        0,            verb_kernel_identify     },
                 { "list",                VERB_ANY, 1,        0,            verb_list                },
                 { "set-default",         2,        2,        0,            verb_set_efivar          },
                 { "set-oneshot",         2,        2,        0,            verb_set_efivar          },
