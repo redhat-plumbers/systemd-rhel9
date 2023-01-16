@@ -2553,7 +2553,10 @@ if conf.get('HAVE_BLKID') == 1 and conf.get('HAVE_GNU_EFI') == 1
 
         public_programs += executable(
                 'bootctl',
-                'src/boot/bootctl.c',
+                ['src/boot/bootctl.c',
+                 'src/boot/bootctl-uki.c',
+                 'src/boot/bootctl-uki.h',
+                ],
                 include_directories : includes,
                 link_with : [boot_link_with],
                 dependencies : [libblkid],
