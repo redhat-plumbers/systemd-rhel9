@@ -231,6 +231,8 @@ struct DissectedImage {
         DissectedPartition partitions[_PARTITION_DESIGNATOR_MAX];
         DecryptedImage *decrypted_image;
 
+        uint32_t sector_size;
+
         /* Meta information extracted from /etc/os-release and similar */
         char *image_name;
         char *hostname;
