@@ -3077,6 +3077,7 @@ static int partition_encrypt(
                                 primary_alg,
                                 blob, blob_size,
                                 hash, hash_size,
+                                NULL, 0, /* no salt because tpm2_seal has no pin */
                                 0,
                                 &v);
                 if (r < 0)
