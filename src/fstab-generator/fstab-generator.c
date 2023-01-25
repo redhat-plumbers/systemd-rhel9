@@ -8,6 +8,7 @@
 #include "bus-error.h"
 #include "bus-locator.h"
 #include "chase-symlinks.h"
+#include "env-util.h"
 #include "fd-util.h"
 #include "fileio.h"
 #include "fstab-util.h"
@@ -650,7 +651,7 @@ static int parse_fstab(bool initrd) {
         _cleanup_endmntent_ FILE *f = NULL;
         const char *fstab;
         struct mntent *me;
-        int r = 0;
+        int r = 0, sysfs_check = -1;
 
         if (initrd)
                 fstab = sysroot_fstab_path();
@@ -688,8 +689,15 @@ static int parse_fstab(bool initrd) {
                                 continue;
                         }
 
-                        if (is_device_path(what)) {
-                                log_info("Running in a container, ignoring fstab device entry for %s.", what);
+                        if (sysfs_check < 0) {
+                                r = getenv_bool_secure("SYSTEMD_SYSFS_CHECK");
+                                if (r < 0 && r != -ENXIO)
+                                        log_debug_errno(r, "Failed to parse $SYSTEMD_SYSFS_CHECK, ignoring: %m");
+                                sysfs_check = r != 0;
+                        }
+
+                        if (sysfs_check && is_device_path(what)) {
+                                log_info("/sys/ is read-only (running in a container?), ignoring fstab device entry for %s.", what);
                                 continue;
                         }
                 }
