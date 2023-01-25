@@ -20,3 +20,11 @@ int dlopen_many_sym_or_warn_sentinel(void **dlp, const char *filename, int log_l
  * "foobar" is loaded into a variable "sym_foobar". */
 #define DLSYM_ARG(arg) \
         &sym_##arg, STRINGIFY(arg)
+
+static inline void *safe_dlclose(void *p) {
+        if (!p)
+                return NULL;
+
+        assert_se(dlclose(p) == 0);
+        return NULL;
+}
