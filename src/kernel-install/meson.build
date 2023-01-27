@@ -3,10 +3,13 @@
 kernel_install_in = files('kernel-install.in')
 loaderentry_install = files('90-loaderentry.install')
 
-uki_copy_install = files('90-uki-copy.install')
+kernel_install_files = files(
+        '50-depmod.install',
+        '90-uki-copy.install',
+)
 
 if want_kernel_install
-        install_data('50-depmod.install',
+        install_data(kernel_install_files,
                      loaderentry_install,
                      install_mode : 'rwxr-xr-x',
                      install_dir : kernelinstalldir)
