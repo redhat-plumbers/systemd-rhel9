@@ -1982,6 +1982,8 @@ static int install_info_symlink_wants(
                         install_changes_add(changes, n_changes, q, *s, NULL);
                         if (r >= 0)
                                 r = q;
+
+                        continue;
                 }
 
                 if (!unit_name_is_valid(dst, valid_dst_type)) {
