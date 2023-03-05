@@ -313,6 +313,8 @@ static int systemctl_help(void) {
                "     --read-only         Create read-only bind mount\n"
                "     --mkdir             Create directory before mounting, if missing\n"
                "     --marked            Restart/reload previously marked units\n"
+               "     --when=TIME         Schedule halt/power-off/reboot/kexec action after\n"
+               "                         a certain timestamp\n"
                "\nSee the %2$s for details.\n",
                program_invocation_short_name,
                link,
@@ -435,6 +437,7 @@ static int systemctl_parse_argv(int argc, char *argv[]) {
                 ARG_MKDIR,
                 ARG_MARKED,
                 ARG_NO_WARN,
+                ARG_WHEN,
         };
 
         static const struct option options[] = {
@@ -497,6 +500,7 @@ static int systemctl_parse_argv(int argc, char *argv[]) {
                 { "read-only",           no_argument,       NULL, ARG_READ_ONLY           },
                 { "mkdir",               no_argument,       NULL, ARG_MKDIR               },
                 { "marked",              no_argument,       NULL, ARG_MARKED              },
+                { "when",                required_argument, NULL, ARG_WHEN                },
                 {}
         };
 
@@ -931,6 +935,30 @@ static int systemctl_parse_argv(int argc, char *argv[]) {
 
                 case ARG_NO_WARN:
                         arg_no_warn = true;
+                        break;
+
+                case ARG_WHEN:
+                        if (streq(optarg, "show")) {
+                                r = logind_show_shutdown();
+                                if (r < 0 && r != -ENODATA)
+                                        return r;
+
+                                return 0;
+                        }
+
+                        if (STR_IN_SET(optarg, "", "cancel")) {
+                                arg_when = USEC_INFINITY;
+                                break;
+                        }
+
+                        r = parse_timestamp(optarg, &arg_when);
+                        if (r < 0)
+                                return log_error_errno(r, "Failed to parse --when= argument '%s': %m", optarg);
+
+                        if (!timestamp_is_set(arg_when))
+                                return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
+                                                       "Invalid timestamp '%s' specified for --when=.", optarg);
+
                         break;
 
                 case '.':
