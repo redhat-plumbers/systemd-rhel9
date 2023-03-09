@@ -1821,7 +1821,7 @@ static int do_reexecute(
                  * we get weird stuff from the kernel cmdline (like --) */
                 if (switch_root_dir)
                         args[i++] = "--switched-root";
-                args[i++] = arg_runtime_scope == RUNTIME_SCOPE_SYSTEM ? "--system" : "--user";
+                args[i++] = runtime_scope_cmdline_option_to_string(arg_runtime_scope);
                 args[i++] = "--deserialize";
                 args[i++] = sfd;
 
