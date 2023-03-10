@@ -118,7 +118,7 @@ static const char *arg_bus_introspect = NULL;
 /* Those variables are initialized to 0 automatically, so we avoid uninitialized memory access.  Real
  * defaults are assigned in reset_arguments() below. */
 static char *arg_default_unit;
-static bool arg_system;
+static RuntimeScope arg_runtime_scope;
 bool arg_dump_core;
 int arg_crash_chvt;
 bool arg_crash_shell;
@@ -634,8 +634,8 @@ static int parse_config_file(void) {
                 { "Manager", "DefaultStartLimitInterval",    config_parse_sec,                   0,                        &arg_default_start_limit_interval }, /* obsolete alias */
                 { "Manager", "DefaultStartLimitIntervalSec", config_parse_sec,                   0,                        &arg_default_start_limit_interval },
                 { "Manager", "DefaultStartLimitBurst",       config_parse_unsigned,              0,                        &arg_default_start_limit_burst    },
-                { "Manager", "DefaultEnvironment",           config_parse_environ,               0,                        &arg_default_environment          },
-                { "Manager", "ManagerEnvironment",           config_parse_environ,               0,                        &arg_manager_environment          },
+                { "Manager", "DefaultEnvironment",           config_parse_environ,               arg_runtime_scope,        &arg_default_environment          },
+                { "Manager", "ManagerEnvironment",           config_parse_environ,               arg_runtime_scope,        &arg_manager_environment          },
                 { "Manager", "DefaultLimitCPU",              config_parse_rlimit,                RLIMIT_CPU,               arg_default_rlimit                },
                 { "Manager", "DefaultLimitFSIZE",            config_parse_rlimit,                RLIMIT_FSIZE,             arg_default_rlimit                },
                 { "Manager", "DefaultLimitDATA",             config_parse_rlimit,                RLIMIT_DATA,              arg_default_rlimit                },
@@ -659,7 +659,7 @@ static int parse_config_file(void) {
                 { "Manager", "DefaultMemoryAccounting",      config_parse_bool,                  0,                        &arg_default_memory_accounting    },
                 { "Manager", "DefaultTasksAccounting",       config_parse_bool,                  0,                        &arg_default_tasks_accounting     },
                 { "Manager", "DefaultTasksMax",              config_parse_tasks_max,             0,                        &arg_default_tasks_max            },
-                { "Manager", "CtrlAltDelBurstAction",        config_parse_emergency_action,      0,                        &arg_cad_burst_action             },
+                { "Manager", "CtrlAltDelBurstAction",        config_parse_emergency_action,      arg_runtime_scope,        &arg_cad_burst_action             },
                 { "Manager", "DefaultOOMPolicy",             config_parse_oom_policy,            0,                        &arg_default_oom_policy           },
                 { "Manager", "DefaultOOMScoreAdjust",        config_parse_oom_score_adjust,      0,                        NULL                              },
 #if ENABLE_SMACK
@@ -674,9 +674,11 @@ static int parse_config_file(void) {
         const char *suffix;
         int r;
 
-        if (arg_system)
+        if (arg_runtime_scope == RUNTIME_SCOPE_SYSTEM)
                 suffix = "system.conf.d";
         else {
+                assert(arg_runtime_scope == RUNTIME_SCOPE_USER);
+
                 r = manager_find_user_config_paths(&files, &dirs);
                 if (r < 0)
                         return log_error_errno(r, "Failed to determine config file paths: %m");
@@ -922,11 +924,11 @@ static int parse_argv(int argc, char *argv[]) {
                         break;
 
                 case ARG_SYSTEM:
-                        arg_system = true;
+                        arg_runtime_scope = RUNTIME_SCOPE_SYSTEM;
                         break;
 
                 case ARG_USER:
-                        arg_system = false;
+                        arg_runtime_scope = RUNTIME_SCOPE_USER;
                         user_arg_seen = true;
                         break;
 
@@ -1067,7 +1069,7 @@ static int parse_argv(int argc, char *argv[]) {
                 /* Hmm, when we aren't run as init system let's complain about excess arguments */
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Excess arguments.");
 
-        if (arg_action == ACTION_RUN && !arg_system && !user_arg_seen)
+        if (arg_action == ACTION_RUN && arg_runtime_scope == RUNTIME_SCOPE_USER && !user_arg_seen)
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
                                        "Explicit --user argument required to run as user manager.");
 
@@ -1818,7 +1820,7 @@ static int do_reexecute(
 
                 if (switch_root_dir)
                         args[i++] = "--switched-root";
-                args[i++] = arg_system ? "--system" : "--user";
+                args[i++] = arg_runtime_scope == RUNTIME_SCOPE_SYSTEM ? "--system" : "--user";
                 args[i++] = "--deserialize";
                 args[i++] = sfd;
                 args[i++] = NULL;
@@ -2046,10 +2048,13 @@ static int invoke_main_loop(
 
 static void log_execution_mode(bool *ret_first_boot) {
         bool first_boot = false;
+        int r;
 
         assert(ret_first_boot);
 
-        if (arg_system) {
+        switch (arg_runtime_scope) {
+
+        case RUNTIME_SCOPE_SYSTEM: {
                 struct utsname uts;
                 int v;
 
@@ -2070,7 +2075,6 @@ static void log_execution_mode(bool *ret_first_boot) {
                 if (in_initrd())
                         log_info("Running in initrd.");
                 else {
-                        int r;
                         _cleanup_free_ char *id_text = NULL;
 
                         /* Let's check whether we are in first boot. First, check if an override was
@@ -2111,7 +2115,11 @@ static void log_execution_mode(bool *ret_first_boot) {
                                     "Your mileage may vary.", uts.release, KERNEL_BASELINE_VERSION);
                 else
                         log_debug("Kernel version %s, our baseline is %s", uts.release, KERNEL_BASELINE_VERSION);
-        } else {
+
+                break;
+        }
+
+        case RUNTIME_SCOPE_USER:
                 if (DEBUG_LOGGING) {
                         _cleanup_free_ char *t = NULL;
 
@@ -2120,6 +2128,11 @@ static void log_execution_mode(bool *ret_first_boot) {
                                   arg_action == ACTION_TEST ? " test" : "",
                                   getuid(), strna(t), systemd_features);
                 }
+
+                break;
+
+        default:
+                assert_not_reached();
         }
 
         *ret_first_boot = first_boot;
@@ -2148,7 +2161,9 @@ static int initialize_runtime(
         update_cpu_affinity(skip_setup);
         update_numa_policy(skip_setup);
 
-        if (arg_system) {
+        switch (arg_runtime_scope) {
+
+        case RUNTIME_SCOPE_SYSTEM:
                 /* Make sure we leave a core dump without panicking the kernel. */
                 install_crash_handler();
 
@@ -2173,7 +2188,10 @@ static int initialize_runtime(
                 r = watchdog_set_device(arg_watchdog_device);
                 if (r < 0)
                         log_warning_errno(r, "Failed to set watchdog device to %s, ignoring: %m", arg_watchdog_device);
-        } else {
+
+                break;
+
+        case RUNTIME_SCOPE_USER: {
                 _cleanup_free_ char *p = NULL;
 
                 /* Create the runtime directory and place the inaccessible device nodes there, if we run in
@@ -2187,30 +2205,38 @@ static int initialize_runtime(
 
                 (void) mkdir_p_label(p, 0755);
                 (void) make_inaccessible_nodes(p, UID_INVALID, GID_INVALID);
+                break;
+        }
+
+        default:
+                assert_not_reached();
         }
 
         if (arg_timer_slack_nsec != NSEC_INFINITY)
                 if (prctl(PR_SET_TIMERSLACK, arg_timer_slack_nsec) < 0)
                         log_warning_errno(errno, "Failed to adjust timer slack, ignoring: %m");
 
-        if (arg_system && !cap_test_all(arg_capability_bounding_set)) {
-                r = capability_bounding_set_drop_usermode(arg_capability_bounding_set);
-                if (r < 0) {
-                        *ret_error_message = "Failed to drop capability bounding set of usermode helpers";
-                        return log_emergency_errno(r, "Failed to drop capability bounding set of usermode helpers: %m");
+        if (arg_runtime_scope == RUNTIME_SCOPE_SYSTEM) {
+
+                if (!cap_test_all(arg_capability_bounding_set)) {
+                        r = capability_bounding_set_drop_usermode(arg_capability_bounding_set);
+                        if (r < 0) {
+                                *ret_error_message = "Failed to drop capability bounding set of usermode helpers";
+                                return log_emergency_errno(r, "Failed to drop capability bounding set of usermode helpers: %m");
+                        }
+
+                        r = capability_bounding_set_drop(arg_capability_bounding_set, true);
+                        if (r < 0) {
+                                *ret_error_message = "Failed to drop capability bounding set";
+                                return log_emergency_errno(r, "Failed to drop capability bounding set: %m");
+                        }
                 }
 
-                r = capability_bounding_set_drop(arg_capability_bounding_set, true);
-                if (r < 0) {
-                        *ret_error_message = "Failed to drop capability bounding set";
-                        return log_emergency_errno(r, "Failed to drop capability bounding set: %m");
-                }
-        }
-
-        if (arg_system && arg_no_new_privs) {
-                if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0) {
-                        *ret_error_message = "Failed to disable new privileges";
-                        return log_emergency_errno(errno, "Failed to disable new privileges: %m");
+                if (arg_no_new_privs) {
+                        if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0) {
+                                *ret_error_message = "Failed to disable new privileges";
+                                return log_emergency_errno(errno, "Failed to disable new privileges: %m");
+                        }
                 }
         }
 
@@ -2222,7 +2248,7 @@ static int initialize_runtime(
                 }
         }
 
-        if (!arg_system)
+        if (arg_runtime_scope == RUNTIME_SCOPE_USER)
                 /* Become reaper of our children */
                 if (prctl(PR_SET_CHILD_SUBREAPER, 1) < 0)
                         log_warning_errno(errno, "Failed to make us a subreaper, ignoring: %m");
@@ -2232,7 +2258,7 @@ static int initialize_runtime(
         (void) bump_rlimit_memlock(saved_rlimit_memlock);
 
         /* Pull credentials from various sources into a common credential directory */
-        if (arg_system && !skip_setup)
+        if (arg_runtime_scope == RUNTIME_SCOPE_SYSTEM && !skip_setup)
                 (void) import_credentials();
 
         return 0;
@@ -2344,7 +2370,7 @@ static void fallback_rlimit_nofile(const struct rlimit *saved_rlimit_nofile) {
          * (and thus use poll()/epoll instead of select(), the way everybody should) can
          * explicitly opt into high fds by bumping their soft limit beyond 1024, to the hard limit
          * we pass. */
-        if (arg_system) {
+        if (arg_runtime_scope == RUNTIME_SCOPE_SYSTEM) {
                 int nr;
 
                 /* Get the underlying absolute limit the kernel enforces */
@@ -2375,7 +2401,7 @@ static void fallback_rlimit_memlock(const struct rlimit *saved_rlimit_memlock) {
                 return;
         }
 
-        if (arg_system)  {
+        if (arg_runtime_scope == RUNTIME_SCOPE_SYSTEM)  {
                 /* Raise the default limit to 8M also on old kernels and in containers (8M is the kernel
                  * default for this since kernel 5.16) */
                 rl->rlim_max = MAX(rl->rlim_max, (rlim_t) DEFAULT_RLIMIT_MEMLOCK);
@@ -2402,7 +2428,7 @@ static void reset_arguments(void) {
 
         arg_default_unit = mfree(arg_default_unit);
 
-        /* arg_system — ignore */
+        /* arg_runtime_scope — ignore */
 
         arg_dump_core = true;
         arg_crash_chvt = -1;
@@ -2508,7 +2534,7 @@ static int parse_configuration(const struct rlimit *saved_rlimit_nofile,
         if (r < 0)
                 log_warning_errno(r, "Failed to parse config file, ignoring: %m");
 
-        if (arg_system) {
+        if (arg_runtime_scope == RUNTIME_SCOPE_SYSTEM) {
                 r = proc_cmdline_parse(parse_proc_cmdline_item, NULL, 0);
                 if (r < 0)
                         log_warning_errno(r, "Failed to parse kernel command line, ignoring: %m");
@@ -2545,12 +2571,12 @@ static int safety_checks(void) {
                                        "Unsupported execution mode while PID 1.");
 
         if (getpid_cached() == 1 &&
-            !arg_system)
+            arg_runtime_scope == RUNTIME_SCOPE_USER)
                 return log_error_errno(SYNTHETIC_ERRNO(EPERM),
                                        "Can't run --user mode as PID 1.");
 
         if (arg_action == ACTION_RUN &&
-            arg_system &&
+            arg_runtime_scope == RUNTIME_SCOPE_SYSTEM &&
             getpid_cached() != 1)
                 return log_error_errno(SYNTHETIC_ERRNO(EPERM),
                                        "Can't run system mode unless PID 1.");
@@ -2560,23 +2586,32 @@ static int safety_checks(void) {
                 return log_error_errno(SYNTHETIC_ERRNO(EPERM),
                                        "Don't run test mode as root.");
 
-        if (!arg_system &&
-            arg_action == ACTION_RUN &&
-            sd_booted() <= 0)
-                return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP),
-                                       "Trying to run as user instance, but the system has not been booted with systemd.");
+        switch (arg_runtime_scope) {
 
-        if (!arg_system &&
-            arg_action == ACTION_RUN &&
-            !getenv("XDG_RUNTIME_DIR"))
-                return log_error_errno(SYNTHETIC_ERRNO(EUNATCH),
-                                       "Trying to run as user instance, but $XDG_RUNTIME_DIR is not set.");
+        case RUNTIME_SCOPE_USER:
 
-        if (arg_system &&
-            arg_action == ACTION_RUN &&
-            running_in_chroot() > 0)
-                return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP),
-                                       "Cannot be run in a chroot() environment.");
+                if (arg_action == ACTION_RUN &&
+                    sd_booted() <= 0)
+                        return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP),
+                                               "Trying to run as user instance, but the system has not been booted with systemd.");
+
+                if (arg_action == ACTION_RUN &&
+                    !getenv("XDG_RUNTIME_DIR"))
+                        return log_error_errno(SYNTHETIC_ERRNO(EUNATCH),
+                                               "Trying to run as user instance, but $XDG_RUNTIME_DIR is not set.");
+
+                break;
+
+        case RUNTIME_SCOPE_SYSTEM:
+                if (arg_action == ACTION_RUN &&
+                    running_in_chroot() > 0)
+                        return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP),
+                                               "Cannot be run in a chroot() environment.");
+                break;
+
+        default:
+                assert_not_reached();
+        }
 
         return 0;
 }
@@ -2646,7 +2681,7 @@ static int collect_fds(FDSet **ret_fds, const char **ret_error_message) {
 
 static void setup_console_terminal(bool skip_setup) {
 
-        if (!arg_system)
+        if (arg_runtime_scope != RUNTIME_SCOPE_SYSTEM)
                 return;
 
         /* Become a session leader if we aren't one yet. */
@@ -2744,7 +2779,7 @@ int main(int argc, char *argv[]) {
 
         if (getpid_cached() == 1) {
                 /* When we run as PID 1 force system mode */
-                arg_system = true;
+                arg_runtime_scope = RUNTIME_SCOPE_SYSTEM;
 
                 /* Disable the umask logic */
                 umask(0);
@@ -2853,7 +2888,7 @@ int main(int argc, char *argv[]) {
                         (void) cache_efi_options_variable();
         } else {
                 /* Running as user instance */
-                arg_system = false;
+                arg_runtime_scope = RUNTIME_SCOPE_USER;
                 log_set_always_reopen_console(true);
                 log_set_target(LOG_TARGET_AUTO);
                 log_open();
@@ -2960,7 +2995,7 @@ int main(int argc, char *argv[]) {
         if (r < 0)
                 goto finish;
 
-        r = manager_new(arg_system ? LOOKUP_SCOPE_SYSTEM : LOOKUP_SCOPE_USER,
+        r = manager_new(arg_runtime_scope,
                         arg_action == ACTION_TEST ? MANAGER_TEST_FULL : 0,
                         &m);
         if (r < 0) {

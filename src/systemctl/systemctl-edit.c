@@ -37,7 +37,7 @@ int verb_cat(int argc, char *argv[], void *userdata) {
         if (arg_transport != BUS_TRANSPORT_LOCAL)
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Cannot remotely cat units.");
 
-        r = lookup_paths_init_or_warn(&lp, arg_scope, 0, arg_root);
+        r = lookup_paths_init_or_warn(&lp, arg_runtime_scope, 0, arg_root);
         if (r < 0)
                 return r;
 
@@ -99,7 +99,7 @@ int verb_cat(int argc, char *argv[], void *userdata) {
                                 ansi_highlight_red(),
                                 ansi_highlight_red(),
                                 ansi_highlight_red(),
-                                arg_scope == LOOKUP_SCOPE_SYSTEM ? "" : " --user",
+                                arg_runtime_scope == RUNTIME_SCOPE_SYSTEM ? "" : " --user",
                                 ansi_normal());
 
                 r = cat_files(fragment_path, dropin_paths, 0);
@@ -382,7 +382,7 @@ static int find_paths_to_edit(sd_bus *bus, char **names, char ***paths) {
         assert(names);
         assert(paths);
 
-        r = lookup_paths_init(&lp, arg_scope, 0, arg_root);
+        r = lookup_paths_init(&lp, arg_runtime_scope, 0, arg_root);
         if (r < 0)
                 return r;
 
@@ -406,8 +406,8 @@ static int find_paths_to_edit(sd_bus *bus, char **names, char ***paths) {
                 if (!path) {
                         if (!arg_force) {
                                 log_info("Run 'systemctl edit%s --force --full %s' to create a new unit.",
-                                         arg_scope == LOOKUP_SCOPE_GLOBAL ? " --global" :
-                                         arg_scope == LOOKUP_SCOPE_USER ? " --user" : "",
+                                         arg_runtime_scope == RUNTIME_SCOPE_GLOBAL ? " --global" :
+                                         arg_runtime_scope == RUNTIME_SCOPE_USER ? " --user" : "",
                                          *name);
                                 return -ENOENT;
                         }
@@ -507,7 +507,7 @@ int verb_edit(int argc, char *argv[], void *userdata) {
         if (arg_transport != BUS_TRANSPORT_LOCAL)
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Cannot edit units remotely.");
 
-        r = lookup_paths_init_or_warn(&lp, arg_scope, 0, arg_root);
+        r = lookup_paths_init_or_warn(&lp, arg_runtime_scope, 0, arg_root);
         if (r < 0)
                 return r;
 

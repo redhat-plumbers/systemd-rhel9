@@ -204,6 +204,7 @@ basic_sources = files(
         'replace-var.h',
         'rlimit-util.c',
         'rlimit-util.h',
+        'runtime-scope.c',
         'set.h',
         'sigbus.c',
         'sigbus.h',

@@ -5577,8 +5577,8 @@ int config_parse_emergency_action(
                 void *data,
                 void *userdata) {
 
-        Manager *m = NULL;
         EmergencyAction *x = ASSERT_PTR(data);
+        RuntimeScope runtime_scope;
         int r;
 
         assert(filename);
@@ -5586,13 +5586,13 @@ int config_parse_emergency_action(
         assert(rvalue);
 
         if (unit)
-                m = ((Unit*) userdata)->manager;
+                runtime_scope = ((Unit*) ASSERT_PTR(userdata))->manager->runtime_scope;
         else
-                m = data;
+                runtime_scope = ltype; /* otherwise, assume the scope is passed in via ltype */
 
-        r = parse_emergency_action(rvalue, MANAGER_IS_SYSTEM(m), x);
+        r = parse_emergency_action(rvalue, runtime_scope, x);
         if (r < 0) {
-                if (r == -EOPNOTSUPP && MANAGER_IS_USER(m)) {
+                if (r == -EOPNOTSUPP && runtime_scope == RUNTIME_SCOPE_USER) {
                         /* Compat mode: remove for systemd 241. */
 
                         log_syntax(unit, LOG_INFO, filename, line, r,
@@ -5605,7 +5605,7 @@ int config_parse_emergency_action(
                 if (r == -EOPNOTSUPP)
                         log_syntax(unit, LOG_WARNING, filename, line, r,
                                    "%s= specified as %s mode action, ignoring: %s",
-                                   lvalue, MANAGER_IS_SYSTEM(m) ? "user" : "system", rvalue);
+                                   lvalue, runtime_scope_to_string(runtime_scope), rvalue);
                 else
                         log_syntax(unit, LOG_WARNING, filename, line, r,
                                    "Failed to parse %s=, ignoring: %s", lvalue, rvalue);

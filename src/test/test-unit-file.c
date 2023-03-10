@@ -40,7 +40,7 @@ TEST(unit_file_build_name_map) {
 
         ids = strv_skip(saved_argv, 1);
 
-        assert_se(lookup_paths_init(&lp, LOOKUP_SCOPE_SYSTEM, 0, NULL) >= 0);
+        assert_se(lookup_paths_init(&lp, RUNTIME_SCOPE_SYSTEM, 0, NULL) >= 0);
 
         assert_se(unit_file_build_name_map(&lp, &mtime, &unit_ids, &unit_names, NULL) == 1);
 
@@ -156,7 +156,7 @@ TEST(unit_file_remove_from_name_map) {
         _cleanup_(rm_rf_physical_and_freep) char *d = NULL;
 
         _cleanup_(lookup_paths_free) LookupPaths lp = {};
-        ASSERT_OK(lookup_paths_init(&lp, LOOKUP_SCOPE_SYSTEM, LOOKUP_PATHS_TEMPORARY_GENERATED, NULL));
+        ASSERT_OK(lookup_paths_init(&lp, RUNTIME_SCOPE_SYSTEM, LOOKUP_PATHS_TEMPORARY_GENERATED, NULL));
         ASSERT_NOT_NULL(d = strdup(lp.temporary_dir));
 
         for (size_t i = 0; i < 10; i++)
