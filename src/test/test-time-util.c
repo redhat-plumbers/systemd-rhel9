@@ -550,7 +550,7 @@ TEST(format_timestamp_utc) {
         test_format_timestamp_utc_one(USEC_TIMESTAMP_FORMATTABLE_MAX, "Thu 9999-12-30 23:59:59 UTC");
         test_format_timestamp_utc_one(USEC_TIMESTAMP_FORMATTABLE_MAX + 1, "--- XXXX-XX-XX XX:XX:XX");
 #elif SIZEOF_TIME_T == 4
-        test_format_timestamp_utc_one(USEC_TIMESTAMP_FORMATTABLE_MAX, "Tue 2038-01-19 03:14:07 UTC");
+        test_format_timestamp_utc_one(USEC_TIMESTAMP_FORMATTABLE_MAX, "Mon 2038-01-18 03:14:07 UTC");
         test_format_timestamp_utc_one(USEC_TIMESTAMP_FORMATTABLE_MAX + 1, "--- XXXX-XX-XX XX:XX:XX");
 #endif
 
