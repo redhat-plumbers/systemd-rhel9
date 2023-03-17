@@ -4616,8 +4616,13 @@ int unit_kill_context(
                          * however should not exist in non-delegated units. On the unified hierarchy that's different,
                          * there we get proper events. Hence rely on them. */
 
+                        /* (RHEL9): we patch out a check for delegation here that exists upstream
+                         * and accept a possible delayed shutdown due to races in favor of
+                         * not just insta-killing the processes.
+                         */
+
                         if (cg_unified_controller(SYSTEMD_CGROUP_CONTROLLER) > 0 ||
-                            (detect_container() == 0 && !unit_cgroup_delegate(u)))
+                            (detect_container() == 0))
                                 wait_for_exit = true;
 
                         if (send_sighup) {
