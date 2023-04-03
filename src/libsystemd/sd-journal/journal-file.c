@@ -319,6 +319,22 @@ static bool compact_mode_requested(void) {
         return true;
 }
 
+static Compression compression_requested(void) {
+        const char *alg;
+        Compression ret;
+
+        alg = getenv("SYSTEMD_JOURNAL_COMPRESS");
+        if (alg == NULL)
+                return DEFAULT_COMPRESSION;
+
+        ret = compression_from_string(alg);
+        if (ret == _COMPRESSION_INVALID) {
+                log_debug("Failed to parse SYSTEMD_JOURNAL_COMPRESS value, ignoring: %s", alg);
+                return DEFAULT_COMPRESSION;
+        }
+        return ret;
+}
+
 static int journal_file_init_header(JournalFile *f, JournalFileFlags file_flags, JournalFile *template) {
         Header h = {};
         ssize_t k;
@@ -1591,7 +1607,7 @@ static Compression maybe_compress_payload(JournalFile *f, uint8_t *dst, const ui
 
 #if HAVE_COMPRESSION
         if (JOURNAL_FILE_COMPRESS(f) && size >= f->compress_threshold_bytes) {
-                compression = compress_blob(src, size, dst, size - 1, rsize);
+                compression = compress_blob_explicit(f->compression, src, size, dst, size - 1, rsize);
                 if (compression > 0)
                         log_debug("Compressed data object %"PRIu64" -> %zu using %s",
                                   size, *rsize, compression_to_string(compression));
@@ -3709,6 +3725,7 @@ int journal_file_open(
                 .fd = fd,
                 .mode = mode,
                 .open_flags = open_flags,
+                .compression = compression_requested(),
                 .compress_threshold_bytes = compress_threshold_bytes == UINT64_MAX ?
                                             DEFAULT_COMPRESS_THRESHOLD :
                                             MAX(MIN_COMPRESS_THRESHOLD, compress_threshold_bytes),
