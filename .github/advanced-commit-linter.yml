@@ -1,0 +1,23 @@
+policy:
+  cherry-pick:
+    upstream:
+      - github: systemd/systemd
+      - github: systemd/systemd-stable
+    exception:
+      note:
+        - rhel-only
+  tracker:
+    - keyword:
+        - 'Resolves: #?'
+        - 'Related: #?'
+        - 'Reverts: #?'
+      issue-format:
+        - '\d+$'
+      url: 'https://bugzilla.redhat.com/show_bug.cgi?id='
+    - keyword:
+        - 'Resolves: '
+        - 'Related: '
+        - 'Reverts: '
+      issue-format:
+        - 'RHEL-\d+$'
+      url: 'https://issues.redhat.com/browse/'
