@@ -9,11 +9,15 @@ pull_request_rules:
       - label!=ci-waived
       - or:
         # Build test
-        - -check-success=build (gcc, 11, bfd, gcrypt)
-        - -check-success=build (gcc, 12, gold, openssl)
-        - -check-success=build (clang, 13, mold, gcrypt) 
-        - -check-success=build (clang, 14, lld, openssl)
-        - -check-success=build (clang, 15, bfd, auto)
+        # test build check only when the tests have been run ...
+        - and:
+          - files~=^(\S+\/meson\.build|\.github\/workflows\/\S+|meson_options\.txt|src\/\S+|test\/fuzz\/\S+)
+          - or:
+            - -check-success=build (gcc, 11, bfd, gcrypt)
+            - -check-success=build (gcc, 12, gold, openssl)
+            - -check-success=build (clang, 13, mold, gcrypt) 
+            - -check-success=build (clang, 14, lld, openssl)
+            - -check-success=build (clang, 15, bfd, auto)
         # Unit tests
         - -check-success=build (GCC, auto)
         - -check-success=build (GCC_ASAN_UBSAN, auto)
@@ -30,14 +34,17 @@ pull_request_rules:
         # CentOS CI
         - -check-success=CentOS CI (CentOS Stream 9)
         - -check-success=CentOS CI (CentOS Stream 9 + sanitizers)
-        # CodeQL
-        - -check-success=CodeQL
         # Packit
         - -check-success=rpm-build:centos-stream-9-aarch64
         - -check-success=rpm-build:centos-stream-9-x86_64
         # Other
         - -check-success=Lint Code Base
         - -check-success=Differential ShellCheck
+        # CodeQL
+        # test CodeQL check only when the CodeQL have been run ...
+        - and:
+          - files~=^(\S+\/meson\.build|\.github\/\S+\/codeql|src\/\S+|test\/\S+|tools\/\S+)
+          - -check-success=CodeQL
     actions:
       label:
         add:
@@ -81,11 +88,15 @@ pull_request_rules:
         - label=ci-waived
         - and:
           # Build test
-          - check-success=build (gcc, 11, bfd, gcrypt)
-          - check-success=build (gcc, 12, gold, openssl)
-          - check-success=build (clang, 13, mold, gcrypt) 
-          - check-success=build (clang, 14, lld, openssl)
-          - check-success=build (clang, 15, bfd, auto)
+          # test build check only when specific files are changed ...
+          - or:
+            - -files~=^(\S+\/meson\.build|\.github\/workflows\/\S+|meson_options\.txt|src\/\S+|test\/fuzz\/\S+)
+            - and:
+              - check-success=build (gcc, 11, bfd, gcrypt)
+              - check-success=build (gcc, 12, gold, openssl)
+              - check-success=build (clang, 13, mold, gcrypt) 
+              - check-success=build (clang, 14, lld, openssl)
+              - check-success=build (clang, 15, bfd, auto)
           # Unit tests
           - check-success=build (GCC, auto)
           - check-success=build (GCC_ASAN_UBSAN, auto)
@@ -103,7 +114,10 @@ pull_request_rules:
           - check-success=CentOS CI (CentOS Stream 9)
           - check-success=CentOS CI (CentOS Stream 9 + sanitizers)
           # CodeQL
-          - check-success=CodeQL
+          # test CodeQL check only when specific files are changed ...
+          - or:
+            - -files~=^(\S+\/meson\.build|\.github\/\S+\/codeql|src\/\S+|test\/\S+|tools\/\S+)
+            - check-success=CodeQL
           # Packit
           - check-success=rpm-build:centos-stream-9-aarch64
           - check-success=rpm-build:centos-stream-9-x86_64
