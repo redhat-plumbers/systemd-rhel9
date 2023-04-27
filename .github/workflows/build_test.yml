@@ -6,6 +6,7 @@ name: Build test
 on:
   pull_request:
     paths:
+      # If changed, also change regexp in `.mergify.yml`
       - '**/meson.build'
       - '.github/workflows/**'
       - 'meson_options.txt'
