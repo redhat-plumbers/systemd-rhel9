@@ -10,6 +10,7 @@ on:
       - main
       - rhel-9.*.0
     paths:
+      # If changed, also change regexp in `.mergify.yml`
       - '**/meson.build'
       - '.github/**/codeql*'
       - 'src/**'
