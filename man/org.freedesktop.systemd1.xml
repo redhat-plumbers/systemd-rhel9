@@ -1590,12 +1590,6 @@ node /org/freedesktop/systemd1 {
         </varlistentry>
 
         <varlistentry>
-          <term><literal>cgroupsv1</literal></term>
-
-          <listitem><para>The system is using the old cgroup hierarchy.</para></listitem>
-        </varlistentry>
-
-        <varlistentry>
           <term><literal>local-hwclock</literal></term>
 
           <listitem><para>The local hardware clock (RTC) is configured to be in local time rather than

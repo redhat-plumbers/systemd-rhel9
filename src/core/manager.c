@@ -4491,9 +4491,6 @@ char* manager_taint_string(const Manager *m) {
         if (access("/proc/cgroups", F_OK) < 0)
                 stage[n++] = "cgroups-missing";
 
-        if (cg_all_unified() == 0)
-                stage[n++] = "cgroupsv1";
-
         if (clock_is_localtime(NULL) > 0)
                 stage[n++] = "local-hwclock";
 
