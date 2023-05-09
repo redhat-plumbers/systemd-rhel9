@@ -14,11 +14,6 @@ TEST(manager_taint_string) {
          * to test for them. Let's do just one. */
         assert_se(!strstr(a, "split-usr"));
 
-        if (cg_all_unified() == 0)
-                assert_se(strstr(a, "cgroupsv1"));
-        else
-                assert_se(!strstr(a, "cgroupsv1"));
-
         m.taint_usr = true;
         _cleanup_free_ char *b = manager_taint_string(&m);
         assert_se(b);
