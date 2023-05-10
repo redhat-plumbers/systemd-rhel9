@@ -48,6 +48,9 @@ if install_tests
         install_subdir('testsuite-16.units',
                        exclude_files : '.gitattributes',
                        install_dir : testdata_dir)
+        install_subdir('testsuite-23.units',
+                       exclude_files : '.gitattributes',
+                       install_dir : testdata_dir)
         install_subdir('testsuite-28.units',
                        exclude_files : '.gitattributes',
                        install_dir : testdata_dir)
