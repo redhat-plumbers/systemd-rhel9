@@ -32,3 +32,5 @@ EFI_STATUS pack_cpio_literal(
                 void **ret_buffer,
                 size_t *ret_buffer_size,
                 bool *ret_measured);
+
+char16_t *get_dropin_dir(const EFI_DEVICE_PATH *file_path);
