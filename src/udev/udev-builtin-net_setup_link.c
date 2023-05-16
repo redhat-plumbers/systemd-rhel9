@@ -10,14 +10,15 @@
 
 static LinkConfigContext *ctx = NULL;
 
-static int builtin_net_setup_link(sd_device *dev, sd_netlink **rtnl, int argc, char **argv, bool test) {
+static int builtin_net_setup_link(UdevEvent *event, int argc, char **argv, bool test) {
+        sd_device *dev = ASSERT_PTR(ASSERT_PTR(event)->dev);
         _cleanup_(link_freep) Link *link = NULL;
         int r;
 
         if (argc > 1)
                 return log_device_error_errno(dev, SYNTHETIC_ERRNO(EINVAL), "This program takes no arguments.");
 
-        r = link_new(ctx, rtnl, dev, &link);
+        r = link_new(ctx, &event->rtnl, dev, &link);
         if (r == -ENODEV) {
                 log_device_debug_errno(dev, r, "Link vanished while getting information, ignoring.");
                 return 0;
@@ -35,7 +36,7 @@ static int builtin_net_setup_link(sd_device *dev, sd_netlink **rtnl, int argc, c
                 return log_device_error_errno(dev, r, "Failed to get link config: %m");
         }
 
-        r = link_apply_config(ctx, rtnl, link);
+        r = link_apply_config(ctx, &event->rtnl, link);
         if (r == -ENODEV)
                 log_device_debug_errno(dev, r, "Link vanished while applying configuration, ignoring.");
         else if (r < 0)
