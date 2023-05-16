@@ -13,7 +13,8 @@
 #include "udev-builtin.h"
 #include "util.h"
 
-static int builtin_btrfs(sd_device *dev, sd_netlink **rtnl, int argc, char *argv[], bool test) {
+static int builtin_btrfs(UdevEvent *event, int argc, char *argv[], bool test) {
+        sd_device *dev = ASSERT_PTR(ASSERT_PTR(event)->dev);
         struct btrfs_ioctl_vol_args args = {};
         _cleanup_close_ int fd = -1;
         int r;
