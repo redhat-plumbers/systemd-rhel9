@@ -177,8 +177,12 @@ systemctl kill --signal=SIGKILL systemd-journald
 sleep 3
 [[ ! -f "/i-lose-my-logs" ]]
 
+set +o pipefail
 # https://github.com/systemd/systemd/issues/15528
-journalctl --follow --file=/var/log/journal/*/* | head -n1 || [[ $? -eq 1 ]]
+journalctl --follow --file=/var/log/journal/*/* | head -n1 | grep .
+# https://github.com/systemd/systemd/issues/24565
+journalctl --follow --merge | head -n1 | grep .
+set -o pipefail
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=2183546
 mkdir /run/systemd/system/systemd-journald.service.d
