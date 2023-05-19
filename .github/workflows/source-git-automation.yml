@@ -33,7 +33,7 @@ jobs:
       validated-pr-metadata: ${{ steps.commit-linter.outputs.validated-pr-metadata }}
 
     permissions:
-      statuses: write
+      checks: write
       pull-requests: write
 
     steps:
