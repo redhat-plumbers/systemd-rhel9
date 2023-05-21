@@ -282,6 +282,13 @@ static EFI_STATUS real_main(EFI_HANDLE image) {
         if (extra) {
                 _cleanup_free_ char16_t *tmp = TAKE_PTR(cmdline), *extra16 = xstr8_to_16(extra);
                 cmdline = xasprintf("%ls %ls", tmp, extra16);
+
+                /* SMBIOS strings are measured in PCR1, but we also want to measure them in our specific
+                 * PCR12, as firmware-owned PCRs are very difficult to use as they'll contain unpredictable
+                 * measurements that are not under control of the machine owner. */
+                m = false;
+                (void) tpm_log_load_options(extra16, &m);
+                parameters_measured = parameters_measured < 0 ? m : (parameters_measured && m);
         }
 
         export_variables(loaded_image);
