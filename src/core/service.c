@@ -1159,8 +1159,7 @@ static void service_set_state(Service *s, ServiceState state) {
         if (old_state != state)
                 log_unit_debug(UNIT(s), "Changed %s -> %s", service_state_to_string(old_state), service_state_to_string(state));
 
-        unit_notify(UNIT(s), table[old_state], table[state],
-                    s->reload_result == SERVICE_SUCCESS ? 0 : UNIT_NOTIFY_RELOAD_FAILURE);
+        unit_notify(UNIT(s), table[old_state], table[state], s->reload_result == SERVICE_SUCCESS);
 }
 
 static usec_t service_coldplug_timeout(Service *s) {
