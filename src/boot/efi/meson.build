@@ -403,6 +403,8 @@ stub_sources = files(
         'stub.c',
 )
 
+addon_sources = files('addon.c')
+
 if efi_arch[1] in ['ia32', 'x86_64']
         stub_sources += files('linux_x86.c')
 endif
@@ -430,7 +432,8 @@ endif
 
 systemd_boot_objects = []
 stub_objects = []
-foreach file : fundamental_source_paths + common_sources + systemd_boot_sources + stub_sources
+addon_objects = []
+foreach file : fundamental_source_paths + common_sources + systemd_boot_sources + stub_sources + addon_sources
         # FIXME: replace ''.format(file) with fs.name(file) when meson_version requirement is >= 0.59.0
         o_file = custom_target('@0@.o'.format(file).split('/')[-1],
                                input : file,
@@ -443,10 +446,14 @@ foreach file : fundamental_source_paths + common_sources + systemd_boot_sources 
         if (fundamental_source_paths + common_sources + stub_sources).contains(file)
                 stub_objects += o_file
         endif
+        if (fundamental_source_paths + common_sources + addon_sources).contains(file)
+                addon_objects += o_file
+        endif
 endforeach
 
-foreach tuple : [['systemd-boot@0@.@1@', systemd_boot_objects, false, 'systemd-boot'],
-                 ['linux@0@.@1@.stub', stub_objects, true, 'systemd-stub']]
+foreach tuple : [['systemd-boot@0@.@1@', systemd_boot_objects, false, 'systemd-boot',],
+                 ['linux@0@.@1@.stub', stub_objects, true, 'systemd-stub'],
+                 ['addon@0@.@1@.stub', addon_objects, true, 'addon']]
         elf = custom_target(
                 tuple[0].format(efi_arch[0], 'elf'),
                 input : tuple[1],
