@@ -4718,6 +4718,7 @@ int unit_require_mounts_for(Unit *u, const char *path, UnitDependencyMask mask) 
 }
 
 int unit_setup_exec_runtime(Unit *u) {
+        _cleanup_set_free_ Set *units = NULL;
         ExecRuntime **rt;
         size_t offset;
         Unit *other;
@@ -4731,9 +4732,15 @@ int unit_setup_exec_runtime(Unit *u) {
         if (*rt)
                 return 0;
 
+        r = unit_get_transitive_dependency_set(u, UNIT_ATOM_JOINS_NAMESPACE_OF, &units);
+        if (r < 0)
+                return r;
+
         /* Try to get it from somebody else */
-        UNIT_FOREACH_DEPENDENCY(other, u, UNIT_ATOM_JOINS_NAMESPACE_OF) {
+        SET_FOREACH(other, units) {
                 r = exec_runtime_acquire(u->manager, NULL, other->id, false, rt);
+                if (r < 0)
+                        return r;
                 if (r == 1)
                         return 1;
         }
@@ -5919,6 +5926,33 @@ int unit_get_dependency_array(const Unit *u, UnitDependencyAtom atom, Unit ***re
 
         assert(n <= INT_MAX);
         return (int) n;
+}
+
+int unit_get_transitive_dependency_set(Unit *u, UnitDependencyAtom atom, Set **ret) {
+        _cleanup_set_free_ Set *units = NULL, *queue = NULL;
+        Unit *other;
+        int r;
+
+        assert(u);
+        assert(ret);
+
+        /* Similar to unit_get_dependency_array(), but also search the same dependency in other units. */
+
+        do {
+                UNIT_FOREACH_DEPENDENCY(other, u, atom) {
+                        r = set_ensure_put(&units, NULL, other);
+                        if (r < 0)
+                                return r;
+                        if (r == 0)
+                                continue;
+                        r = set_ensure_put(&queue, NULL, other);
+                        if (r < 0)
+                                return r;
+                }
+        } while ((u = set_steal_first(queue)));
+
+        *ret = TAKE_PTR(units);
+        return 0;
 }
 
 const ActivationDetailsVTable * const activation_details_vtable[_UNIT_TYPE_MAX] = {
