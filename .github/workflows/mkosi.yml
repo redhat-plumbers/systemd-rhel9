@@ -86,6 +86,7 @@ jobs:
         ToolsTreeRelease=42
         # Sometimes we run on a host with /dev/kvm, but it is broken, so explicitly disable it
         QemuKvm=no
+        QemuVsock=yes
         EOF
 
         # These should override the options from mkosi.conf so we put them in a dropin that's ordered later
