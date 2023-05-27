@@ -101,6 +101,27 @@ static bool has_virtio_console(void) {
         return r > 0;
 }
 
+static bool has_virtio_vsock(void) {
+        int r;
+
+        /* Directory traversal might be slow, hence let's do a cheap check first if it's even worth it */
+        if (detect_vm() == VIRTUALIZATION_NONE)
+                return false;
+
+        r = recurse_dir_at(
+                        AT_FDCWD,
+                        "/sys/devices/pci0000:00",
+                        /* statx_mask= */ 0,
+                        /* n_depth_max= */ 3,
+                        RECURSE_DIR_ENSURE_TYPE,
+                        match_modalias_recurse_dir_cb,
+                        STRV_MAKE("virtio:d00000013v"));
+        if (r < 0)
+                log_debug_errno(r, "Failed to determine whether host has virtio-vsock device, ignoring: %m");
+
+        return r > 0;
+}
+
 static bool in_qemu(void) {
         return IN_SET(detect_vm(), VIRTUALIZATION_KVM, VIRTUALIZATION_QEMU);
 }
@@ -136,7 +157,10 @@ int kmod_setup(void) {
 
                 /* we want early logging to hvc consoles if possible, and make sure systemd-getty-generator
                  * can rely on all consoles being probed already.*/
-                { "virtio_console",  NULL,                        false, false, has_virtio_console },
+                { "virtio_console",             NULL,                        false, false, has_virtio_console },
+
+                /* Make sure we can send sd-notify messages over vsock as early as possible. */
+                { "vmw_vsock_virtio_transport", NULL,                        false, false, has_virtio_vsock   },
 
                 /* qemu_fw_cfg would be loaded by udev later, but we want to import credentials from it super early */
                 { "qemu_fw_cfg", "/sys/firmware/qemu_fw_cfg", false, false,  in_qemu   },
