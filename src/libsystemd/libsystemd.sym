@@ -796,3 +796,9 @@ global:
 
         sd_hwdb_new_from_path;
 } LIBSYSTEMD_251;
+
+
+LIBSYSTEMD_254 {
+global:
+        sd_journal_step_one;
+} LIBSYSTEMD_252;
