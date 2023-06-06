@@ -19,4 +19,4 @@ ConditionPathExists={{QUOTACHECK}}
 Type=oneshot
 RemainAfterExit=yes
 ExecStart={{ROOTLIBEXECDIR}}/systemd-quotacheck
-TimeoutSec=0
+TimeoutSec=infinity
