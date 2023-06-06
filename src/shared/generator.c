@@ -218,7 +218,7 @@ static int write_fsck_sysroot_service(
                 "Type=oneshot\n"
                 "RemainAfterExit=yes\n"
                 "ExecStart=" SYSTEMD_FSCK_PATH " %7$s\n"
-                "TimeoutSec=0\n",
+                "TimeoutSec=infinity\n",
                 program_invocation_short_name,
                 escaped,
                 unit,
@@ -513,7 +513,7 @@ int generator_hook_up_mkswap(
                 "Type=oneshot\n"
                 "RemainAfterExit=yes\n"
                 "ExecStart="SYSTEMD_MAKEFS_PATH " swap %s\n"
-                "TimeoutSec=0\n",
+                "TimeoutSec=infinity\n",
                 program_invocation_short_name,
                 where_unit,
                 escaped);
@@ -594,7 +594,7 @@ int generator_hook_up_mkfs(
                 "Type=oneshot\n"
                 "RemainAfterExit=yes\n"
                 "ExecStart="SYSTEMD_MAKEFS_PATH " %s %s\n"
-                "TimeoutSec=0\n",
+                "TimeoutSec=infinity\n",
                 program_invocation_short_name,
                 where_unit,
                 type,
@@ -738,7 +738,7 @@ int generator_write_cryptsetup_service_section(
                 "[Service]\n"
                 "Type=oneshot\n"
                 "RemainAfterExit=yes\n"
-                "TimeoutSec=0\n"          /* The binary handles timeouts on its own */
+                "TimeoutSec=infinity\n"   /* The binary handles timeouts on its own */
                 "KeyringMode=shared\n"    /* Make sure we can share cached keys among instances */
                 "OOMScoreAdjust=500\n"    /* Unlocking can allocate a lot of memory if Argon2 is used */
                 "ExecStart=" SYSTEMD_CRYPTSETUP_PATH " attach '%s' '%s' '%s' '%s'\n"
