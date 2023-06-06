@@ -19,6 +19,6 @@ Wants=network-online.target
 [Service]
 Type=forking
 ExecStart={{RC_LOCAL_PATH}} start
-TimeoutSec=0
+TimeoutSec=infinity
 RemainAfterExit=yes
 GuessMainPID=no
