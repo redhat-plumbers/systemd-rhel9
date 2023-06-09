@@ -31,6 +31,8 @@ basic_sources = files(
         'chattr-util.h',
         'conf-files.c',
         'conf-files.h',
+        'confidential-virt.c',
+        'confidential-virt.h',
         'def.h',
         'devnum-util.c',
         'devnum-util.h',
