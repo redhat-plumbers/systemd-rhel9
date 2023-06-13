@@ -15,7 +15,11 @@ int open_tmpfile_unlinkable(const char *directory, int flags);
 int open_tmpfile_linkable(const char *target, int flags, char **ret_path);
 int fopen_tmpfile_linkable(const char *target, int flags, char **ret_path, FILE **ret_file);
 
-int link_tmpfile(int fd, const char *path, const char *target, bool replace);
-int flink_tmpfile(FILE *f, const char *path, const char *target, bool replace);
+typedef enum LinkTmpfileFlags {
+        LINK_TMPFILE_REPLACE = 1 << 0,
+} LinkTmpfileFlags;
+
+int link_tmpfile(int fd, const char *path, const char *target, LinkTmpfileFlags flags);
+int flink_tmpfile(FILE *f, const char *path, const char *target, LinkTmpfileFlags flags);
 
 int mkdtemp_malloc(const char *template, char **ret);

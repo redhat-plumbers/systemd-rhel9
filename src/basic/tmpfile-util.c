@@ -319,7 +319,7 @@ static int link_fd(int fd, int newdirfd, const char *newpath) {
         return RET_NERRNO(linkat(fd, "", newdirfd, newpath, AT_EMPTY_PATH));
 }
 
-int link_tmpfile(int fd, const char *path, const char *target, bool replace) {
+int link_tmpfile(int fd, const char *path, const char *target, LinkTmpfileFlags flags) {
         _cleanup_free_ char *tmp = NULL;
         int r;
 
@@ -331,14 +331,14 @@ int link_tmpfile(int fd, const char *path, const char *target, bool replace) {
          * is not supported on the directory, and renameat2() is used instead. */
 
         if (path) {
-                if (replace)
+                if (FLAGS_SET(flags, LINK_TMPFILE_REPLACE))
                         return RET_NERRNO(rename(path, target));
 
                 return rename_noreplace(AT_FDCWD, path, AT_FDCWD, target);
         }
 
         r = link_fd(fd, AT_FDCWD, target);
-        if (r != -EEXIST || !replace)
+        if (r != -EEXIST || !FLAGS_SET(flags, LINK_TMPFILE_REPLACE))
                 return r;
 
         /* So the target already exists and we were asked to replace it. That sucks a bit, since the kernel's
@@ -363,7 +363,7 @@ int link_tmpfile(int fd, const char *path, const char *target, bool replace) {
         return 0;
 }
 
-int flink_tmpfile(FILE *f, const char *path, const char *target, bool replace) {
+int flink_tmpfile(FILE *f, const char *path, const char *target, LinkTmpfileFlags flags) {
         int fd, r;
 
         assert(f);
@@ -377,7 +377,7 @@ int flink_tmpfile(FILE *f, const char *path, const char *target, bool replace) {
         if (r < 0)
                 return r;
 
-        return link_tmpfile(fd, path, target, replace);
+        return link_tmpfile(fd, path, target, flags);
 }
 
 int mkdtemp_malloc(const char *template, char **ret) {
