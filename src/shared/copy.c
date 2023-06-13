@@ -1427,7 +1427,7 @@ int copy_file_atomic_full(
                         return -errno;
         }
 
-        r = link_tmpfile(fdt, t, to, copy_flags & COPY_REPLACE);
+        r = link_tmpfile(fdt, t, to, (copy_flags & COPY_REPLACE) ? LINK_TMPFILE_REPLACE : 0);
         if (r < 0)
                 return r;
 
