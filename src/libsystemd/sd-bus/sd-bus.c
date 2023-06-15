@@ -3486,14 +3486,15 @@ static int add_match_callback(
         return r;
 }
 
-static int bus_add_match_full(
+int bus_add_match_full(
                 sd_bus *bus,
                 sd_bus_slot **slot,
                 bool asynchronous,
                 const char *match,
                 sd_bus_message_handler_t callback,
                 sd_bus_message_handler_t install_callback,
-                void *userdata) {
+                void *userdata,
+                uint64_t timeout_usec) {
 
         struct bus_match_component *components = NULL;
         unsigned n_components = 0;
@@ -3539,7 +3540,8 @@ static int bus_add_match_full(
                                                                  &s->match_callback.install_slot,
                                                                  s->match_callback.match_string,
                                                                  add_match_callback,
-                                                                 s);
+                                                                 s,
+                                                                 timeout_usec);
 
                                 if (r < 0)
                                         goto finish;
@@ -3549,7 +3551,10 @@ static int bus_add_match_full(
                                  * then make it floating. */
                                 r = sd_bus_slot_set_floating(s->match_callback.install_slot, true);
                         } else
-                                r = bus_add_match_internal(bus, s->match_callback.match_string, &s->match_callback.after);
+                                r = bus_add_match_internal(bus,
+                                                s->match_callback.match_string,
+                                                timeout_usec,
+                                                &s->match_callback.after);
                         if (r < 0)
                                 goto finish;
 
@@ -3580,7 +3585,7 @@ _public_ int sd_bus_add_match(
                 sd_bus_message_handler_t callback,
                 void *userdata) {
 
-        return bus_add_match_full(bus, slot, false, match, callback, NULL, userdata);
+        return bus_add_match_full(bus, slot, false, match, callback, NULL, userdata, 0);
 }
 
 _public_ int sd_bus_add_match_async(
@@ -3591,7 +3596,7 @@ _public_ int sd_bus_add_match_async(
                 sd_bus_message_handler_t install_callback,
                 void *userdata) {
 
-        return bus_add_match_full(bus, slot, true, match, callback, install_callback, userdata);
+        return bus_add_match_full(bus, slot, true, match, callback, install_callback, userdata, 0);
 }
 
 bool bus_pid_changed(sd_bus *bus) {
