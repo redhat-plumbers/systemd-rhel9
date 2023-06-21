@@ -3,7 +3,8 @@
 # CPU hotadd request
 SUBSYSTEM!="cpu", GOTO="cpu_online_end"
 ACTION!="add", GOTO="cpu_online_end"
-CONST{arch}=="s390*|ppc64*", GOTO="cpu_online_end"
+CONST{arch}=="ppc64*", GOTO="cpu_online_end"
+CONST{arch}=="s390*", ATTR{configure}=="0", GOTO="cpu_online_end"
 
 TEST=="online", ATTR{online}=="0", ATTR{online}="1"
 
