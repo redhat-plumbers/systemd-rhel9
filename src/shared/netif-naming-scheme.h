@@ -38,6 +38,7 @@ typedef enum NamingSchemeFlags {
         NAMING_XEN_VIF                   = 1 << 13, /* Generate names for Xen netfront devices */
         NAMING_BRIDGE_MULTIFUNCTION_SLOT = 1 << 14, /* Use PCI hotplug slot information associated with bridge, but only if PCI device is multifunction */
         NAMING_DEVICETREE_ALIASES        = 1 << 15, /* Generate names from devicetree aliases */
+        NAMING_SR_IOV_R                  = 1 << 17, /* Use "r" suffix for SR-IOV VF representors */
 
         /* And now the masks that combine the features above */
         NAMING_V238 = 0,
@@ -54,6 +55,7 @@ typedef enum NamingSchemeFlags {
         NAMING_RHEL_9_0 = NAMING_V250 | NAMING_BRIDGE_MULTIFUNCTION_SLOT,
         NAMING_RHEL_9_1 = NAMING_RHEL_9_0,
         NAMING_RHEL_9_2 = NAMING_RHEL_9_0,
+        NAMING_RHEL_9_3 = NAMING_RHEL_9_0 | NAMING_SR_IOV_R,
 
         EXTRA_NET_NAMING_SCHEMES
 
