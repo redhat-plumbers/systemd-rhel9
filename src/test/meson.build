@@ -469,6 +469,8 @@ tests += [
 
         [files('test-gpt.c')],
 
+        [files('test-gunicode.c')],
+
         [files('test-log.c')],
 
         [files('test-ipcrm.c'),
