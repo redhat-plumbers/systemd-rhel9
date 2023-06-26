@@ -53,9 +53,10 @@ enum {
         SD_PATH_USER_SHARED,
 
         /* User configuration, state, runtime ... */
-        SD_PATH_USER_CONFIGURATION, /* takes both actual configuration (like /etc) and state (like /var/lib) */
+        SD_PATH_USER_CONFIGURATION,
         SD_PATH_USER_RUNTIME,
         SD_PATH_USER_STATE_CACHE,
+        /* → SD_PATH_USER_STATE_PRIVATE is added at the bottom */
 
         /* User resources */
         SD_PATH_USER, /* $HOME itself */
@@ -109,6 +110,8 @@ enum {
 
         /* systemd-networkd search paths */
         SD_PATH_SYSTEMD_SEARCH_NETWORK,
+
+        SD_PATH_USER_STATE_PRIVATE,
 
         _SD_PATH_MAX
 };
