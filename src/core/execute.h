@@ -24,6 +24,7 @@ typedef struct Manager Manager;
 #include "nsflags.h"
 #include "numa-util.h"
 #include "path-util.h"
+#include "runtime-scope.h"
 #include "time-util.h"
 
 #define EXEC_STDIN_DATA_MAX (64U*1024U*1024U)
@@ -393,6 +394,8 @@ typedef enum ExecFlags {
 /* Parameters for a specific invocation of a command. This structure is put together right before a command is
  * executed. */
 struct ExecParameters {
+        RuntimeScope runtime_scope;
+
         char **environment;
 
         int *fds;
