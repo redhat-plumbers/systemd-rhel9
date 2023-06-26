@@ -3621,7 +3621,7 @@ static int apply_mount_namespace(
                 }
         }
 
-        if (MANAGER_IS_SYSTEM(u->manager)) {
+        if (params->runtime_scope == RUNTIME_SCOPE_SYSTEM) {
                 propagate_dir = path_join("/run/systemd/propagate/", u->id);
                 if (!propagate_dir) {
                         r = -ENOMEM;
@@ -3639,11 +3639,14 @@ static int apply_mount_namespace(
                         r = -ENOMEM;
                         goto finalize;
                 }
-        } else
+        } else {
+                assert(params->runtime_scope == RUNTIME_SCOPE_USER);
+
                 if (asprintf(&extension_dir, "/run/user/" UID_FMT "/systemd/unit-extensions", geteuid()) < 0) {
                         r = -ENOMEM;
                         goto finalize;
                 }
+        }
 
         r = setup_namespace(root_dir, root_image, context->root_image_options,
                             &ns_info, context->read_write_paths,
@@ -4261,7 +4264,7 @@ static int exec_child(
          * invocations themselves. Also note that while we'll only invoke NSS modules involved in user management they
          * might internally call into other NSS modules that are involved in hostname resolution, we never know. */
         if (setenv("SYSTEMD_ACTIVATION_UNIT", unit->id, true) != 0 ||
-            setenv("SYSTEMD_ACTIVATION_SCOPE", runtime_scope_to_string(unit->manager->runtime_scope), true) != 0) {
+            setenv("SYSTEMD_ACTIVATION_SCOPE", runtime_scope_to_string(params->runtime_scope), true) != 0) {
                 *exit_status = EXIT_MEMORY;
                 return log_unit_error_errno(unit, errno, "Failed to update environment: %m");
         }
