@@ -496,7 +496,8 @@ tests += [
 
         [files('test-sleep.c')],
 
-        [files('test-tpm2.c')],
+        [files('test-tpm2.c'),
+         [], [libopenssl], [], 'HAVE_OPENSSL'],
 
         [files('test-replace-var.c')],
 
@@ -689,8 +690,6 @@ tests += [
         [files('test-openssl.c'),
          [], [libopenssl], [], 'HAVE_OPENSSL'],
 ]
-
-############################################################
 
 # define some tests here, because the link_with deps were not defined earlier
 
