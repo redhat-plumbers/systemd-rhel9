@@ -2570,6 +2570,11 @@ static int setup_exec_directory(
                 if (r < 0)
                         goto fail;
 
+                /* Skip the rest (which deals with ownership) in user mode, since ownership changes are not
+                 * available to user code anyway */
+                if (params->runtime_scope != RUNTIME_SCOPE_SYSTEM)
+                        continue;
+
                 /* Then, change the ownership of the whole tree, if necessary. When dynamic users are used we
                  * drop the suid/sgid bits, since we really don't want SUID/SGID files for dynamic UID/GID
                  * assignments to exist. */
