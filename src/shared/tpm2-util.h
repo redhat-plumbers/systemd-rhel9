@@ -27,6 +27,11 @@ typedef enum TPM2Flags {
  * the Provisioning Guidance document for more details. */
 #define TPM2_SRK_HANDLE UINT32_C(0x81000001)
 
+/* The TPM specification limits sealed data to MAX_SYM_DATA. Unfortunately, tpm2-tss incorrectly
+ * defines this value as 256; the TPM specification Part 2 ("Structures") section
+ * "TPMU_SENSITIVE_CREATE" states "For interoperability, MAX_SYM_DATA should be 128." */
+#define TPM2_MAX_SEALED_DATA UINT16_C(128)
+
 static inline bool TPM2_PCR_INDEX_VALID(unsigned pcr) {
         return pcr < TPM2_PCRS_MAX;
 }
@@ -179,7 +184,9 @@ int tpm2_calculate_pubkey_name(const TPMT_PUBLIC *public, TPM2B_NAME *ret_name);
 int tpm2_calculate_policy_auth_value(TPM2B_DIGEST *digest);
 int tpm2_calculate_policy_authorize(const TPM2B_PUBLIC *public, const TPM2B_DIGEST *policy_ref, TPM2B_DIGEST *digest);
 int tpm2_calculate_policy_pcr(const Tpm2PCRValue *pcr_values, size_t n_pcr_values, TPM2B_DIGEST *digest);
+int tpm2_calculate_serialize(TPM2_HANDLE handle, const TPM2B_NAME *name, const TPM2B_PUBLIC *public, void **ret_serialized, size_t *ret_serialized_size);
 int tpm2_calculate_sealing_policy(const Tpm2PCRValue *pcr_values, size_t n_pcr_values, const TPM2B_PUBLIC *public, bool use_pin, TPM2B_DIGEST *digest);
+int tpm2_calculate_seal(TPM2_HANDLE parent_handle, const TPM2B_PUBLIC *parent_public, const TPMA_OBJECT *attributes, const void *secret, size_t secret_size, const TPM2B_DIGEST *policy, const char *pin, void **ret_secret, size_t *ret_secret_size, void **ret_blob, size_t *ret_blob_size, void **ret_serialized_parent, size_t *ret_serialized_parent_size);
 
 int tpm2_get_srk_template(TPMI_ALG_PUBLIC alg, TPMT_PUBLIC *ret_template);
 int tpm2_get_best_srk_template(Tpm2Context *c, TPMT_PUBLIC *ret_template);
