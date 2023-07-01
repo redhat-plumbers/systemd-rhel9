@@ -39,7 +39,7 @@ jobs:
     steps:
       - id: commit-linter
         name: Lint Commits
-        uses: redhat-plumbers-in-action/advanced-commit-linter@v1
+        uses: redhat-plumbers-in-action/advanced-commit-linter@v2
         with:
           pr-metadata: ${{ needs.download-metadata.outputs.pr-metadata }}
           token: ${{ secrets.GITHUB_TOKEN }}
