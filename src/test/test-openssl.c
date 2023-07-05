@@ -2,6 +2,7 @@
 
 #include "hexdecoct.h"
 #include "openssl-util.h"
+#include "string-util.h"
 #include "tests.h"
 
 TEST(openssl_pkey_from_pem) {
@@ -100,6 +101,57 @@ TEST(invalid) {
         DEFINE_HEX_PTR(key, "2d2d2d2d2d424547494e205055424c4943204b45592d2d2d2d2d0a4d466b7b");
         assert_se(openssl_pkey_from_pem(key, key_len, &pkey) == -EIO);
         assert_se(pkey == NULL);
+}
+
+static const struct {
+        const char *alg;
+        size_t size;
+} digest_size_table[] = {
+        /* SHA1 "family" */
+        { "sha1",     20, },
+#if OPENSSL_VERSION_MAJOR >= 3
+        { "sha-1",    20, },
+#endif
+        /* SHA2 family */
+        { "sha224",   28, },
+        { "sha256",   32, },
+        { "sha384",   48, },
+        { "sha512",   64, },
+#if OPENSSL_VERSION_MAJOR >= 3
+        { "sha-224",  28, },
+        { "sha2-224", 28, },
+        { "sha-256",  32, },
+        { "sha2-256", 32, },
+        { "sha-384",  48, },
+        { "sha2-384", 48, },
+        { "sha-512",  64, },
+        { "sha2-512", 64, },
+#endif
+        /* SHA3 family */
+        { "sha3-224", 28, },
+        { "sha3-256", 32, },
+        { "sha3-384", 48, },
+        { "sha3-512", 64, },
+        /* SM3 family */
+        { "sm3",      32, },
+        /* MD5 family */
+        { "md5",      16, },
+};
+
+TEST(digest_size) {
+        size_t size;
+
+        FOREACH_ARRAY(t, digest_size_table, ELEMENTSOF(digest_size_table)) {
+                assert(openssl_digest_size(t->alg, &size) >= 0);
+                assert_se(size == t->size);
+
+                _cleanup_free_ char *uppercase_alg = strdup(t->alg);
+                assert_se(uppercase_alg);
+                assert_se(openssl_digest_size(ascii_strupper(uppercase_alg), &size) >= 0);
+                assert_se(size == t->size);
+        }
+
+        assert_se(openssl_digest_size("invalid.alg", &size) == -EOPNOTSUPP);
 }
 
 DEFINE_TEST_MAIN(LOG_DEBUG);
