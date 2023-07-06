@@ -601,6 +601,12 @@ static int add_mount(
         if (r < 0)
                 return r;
 
+        if (in_initrd() && path_equal(where, "/sysroot") && is_device_path(what)) {
+                r = generator_write_initrd_root_device_deps(dest, what);
+                if (r < 0)
+                        return r;
+        }
+
         r = write_mount_timeout(f, where, opts);
         if (r < 0)
                 return r;
@@ -885,12 +891,6 @@ static int parse_fstab_one(
                         mount_is_network(fstype, options) ? SPECIAL_REMOTE_FS_TARGET :
                                                             SPECIAL_LOCAL_FS_TARGET;
 
-        if (is_sysroot && is_device_path(what)) {
-                r = generator_write_initrd_root_device_deps(arg_dest, what);
-                if (r < 0)
-                        return r;
-        }
-
         r = add_mount(source,
                       arg_dest,
                       what,
@@ -1077,11 +1077,6 @@ static int add_sysroot_mount(void) {
 
         log_debug("Found entry what=%s where=/sysroot type=%s opts=%s", what, strna(arg_root_fstype), strempty(opts));
 
-        if (is_device_path(what)) {
-                r = generator_write_initrd_root_device_deps(arg_dest, what);
-                if (r < 0)
-                        return r;
-        }
 
         return add_mount("/proc/cmdline",
                          arg_dest,
