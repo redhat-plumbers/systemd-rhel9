@@ -685,6 +685,9 @@ tests += [
         [files('test-sha256.c')],
 
         [files('test-bitfield.c')],
+
+        [files('test-openssl.c'),
+         [], [libopenssl], [], 'HAVE_OPENSSL'],
 ]
 
 ############################################################
