@@ -6,6 +6,7 @@ policy:
     exception:
       note:
         - rhel-only
+        - RHEL-only
   tracker:
     - keyword:
         - 'Resolves: #?'
