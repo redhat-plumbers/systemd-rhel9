@@ -2,7 +2,6 @@ policy:
   cherry-pick:
     upstream:
       - github: systemd/systemd
-      - github: systemd/systemd-stable
     exception:
       note:
         - rhel-only
