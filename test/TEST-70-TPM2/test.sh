@@ -16,6 +16,7 @@ command -v openssl >/dev/null 2>&1 || exit 0
 command -v tpm2_createprimary >/dev/null 2>&1 || exit 0
 command -v tpm2_evictcontrol >/dev/null 2>&1 || exit 0
 command -v tpm2_flushcontext >/dev/null 2>&1 || exit 0
+command -v tpm2_readpublic >/dev/null 2>&1 || exit 0
 
 
 test_append_files() {
@@ -30,6 +31,7 @@ test_append_files() {
         inst_binary tpm2_createprimary
         inst_binary tpm2_evictcontrol
         inst_binary tpm2_flushcontext
+        inst_binary tpm2_readpublic
 }
 
 TEST_70_TPM_DEVICE="tpm-tis"
