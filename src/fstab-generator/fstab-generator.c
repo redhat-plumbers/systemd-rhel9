@@ -880,6 +880,9 @@ static int parse_fstab_one(
         if (is_swap)
                 return add_swap(source, what, options, flags);
 
+        if (passno < 0)
+                passno = is_device_path(what);
+
         assert(where_original); /* 'where' is not necessary for swap entry. */
 
         if (!is_path(where_original)) {
@@ -1287,7 +1290,7 @@ static int add_mounts_from_cmdline(void) {
                               m->where,
                               m->fstype,
                               m->options,
-                              /* passno = */ 0,
+                              /* passno = */ -1,
                               /* prefix_sysroot = */ !m->for_initrd && in_initrd(),
                               /* accept_root = */ true,
                               /* use_swap_enabled = */ false);
