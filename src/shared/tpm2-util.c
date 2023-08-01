@@ -4183,6 +4183,7 @@ const char *tpm2_hash_alg_to_string(uint16_t alg) {
                 return "sha384";
         if (alg == TPM2_ALG_SHA512)
                 return "sha512";
+        log_debug("Unknown hash algorithm id 0x%" PRIx16, alg);
         return NULL;
 }
 
@@ -4195,7 +4196,7 @@ int tpm2_hash_alg_from_string(const char *alg) {
                 return TPM2_ALG_SHA384;
         if (strcaseeq_ptr(alg, "sha512"))
                 return TPM2_ALG_SHA512;
-        return -EINVAL;
+        return log_debug_errno(SYNTHETIC_ERRNO(EINVAL), "Unknown hash algorithm name '%s'", alg);
 }
 
 const char *tpm2_asym_alg_to_string(uint16_t alg) {
@@ -4203,6 +4204,7 @@ const char *tpm2_asym_alg_to_string(uint16_t alg) {
                 return "ecc";
         if (alg == TPM2_ALG_RSA)
                 return "rsa";
+        log_debug("Unknown asymmetric algorithm id 0x%" PRIx16, alg);
         return NULL;
 }
 
@@ -4211,7 +4213,7 @@ int tpm2_asym_alg_from_string(const char *alg) {
                 return TPM2_ALG_ECC;
         if (strcaseeq_ptr(alg, "rsa"))
                 return TPM2_ALG_RSA;
-        return -EINVAL;
+        return log_debug_errno(SYNTHETIC_ERRNO(EINVAL), "Unknown asymmetric algorithm name '%s'", alg);
 }
 
 Tpm2Support tpm2_support(void) {
