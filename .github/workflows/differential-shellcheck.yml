@@ -32,4 +32,6 @@ jobs:
       - name: Differential ShellCheck
         uses: redhat-plumbers-in-action/differential-shellcheck@v4
         with:
+          # exclude all `.in` files because they may contain unsupported syntax, and they have to be preprocessed first
+          exclude-path: '**/*.in'
           token: ${{ secrets.GITHUB_TOKEN }}
