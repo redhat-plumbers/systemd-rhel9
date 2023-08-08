@@ -17,7 +17,7 @@ flowchart LR
 
 ## Filing issues
 
-When you find an issue with systemd used in CentOS Stream or RHEL, please file an issue in [Jira ticket system](https://issues.redhat.com/secure/CreateIssue!default.jspa) (set Project to **RHEL** and Component to **systemd**).
+When you find an issue with systemd used in CentOS Stream or RHEL, please file an issue in [Jira ticket system](https://issues.redhat.com/secure/CreateIssueDetails!init.jspa?pid=12332745&issuetype=1&components=12380515).
 
 GitHub Issues are not supported tracking system. If your issue is reproducible using the latest upstream version of systemd, please consider creating [upstream issue](https://github.com/systemd/systemd/issues/new/choose).
 
