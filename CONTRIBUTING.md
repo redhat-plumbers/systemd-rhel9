@@ -17,7 +17,8 @@ flowchart LR
 
 ## Filing issues
 
-When you find an issue with systemd used in CentOS Stream or RHEL, please file an issue by using Bugzilla ticket systemd - [link](https://bugzilla.redhat.com/enter_bug.cgi?classification=Red%20Hat)
+When you find an issue with systemd used in CentOS Stream or RHEL, please file an issue in [Jira ticket system](https://issues.redhat.com/secure/CreateIssue!default.jspa) (set Project to **RHEL** and Component to **systemd**).
+
 GitHub Issues are not supported tracking system. If your issue is reproducible using the latest upstream version of systemd, please consider creating [upstream issue](https://github.com/systemd/systemd/issues/new/choose).
 
 ## Posting Pull Requests
@@ -39,7 +40,7 @@ doc: Fix TYPO
 
 rhel-only
 
-Resolves: #1234567
+Resolves: RHEL-678
 ```
 
 ### Issue reference
@@ -47,15 +48,17 @@ Resolves: #1234567
 Each commit has to reference the relevant approved systemd issue (see: [Filling issues section](#filing-issues)). For referencing issues, we use the following keywords:
 
 - **Resolves** for commits that directly resolve issues described in a referenced tracker
-- **Relates** for commits related to the referenced issue, but they don't fix it. Usually, tests and documentation.
+- **Related** for commits related to the referenced issue, but they don't fix it. Usually, tests and documentation.
 - **Reverts** for commits that reverts previously merged commit
+
+When referencing issues, use following structure: `<keyword>: <issue ID>`. See the example below:
 
 ```md
 doc: Fix TYPO
 
 (cherry picked from commit c5afbac31bb33e7b1f4d59b253425af991a630a4)
 
-Resolves: #1234567
+Resolves: RHEL-678
 ```
 
 ### Validation and testing
