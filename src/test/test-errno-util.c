@@ -47,4 +47,11 @@ TEST(STRERROR_OR_ELSE) {
         log_info("STRERROR_OR_ELSE(-EPERM, \"EOF\") → %s", STRERROR_OR_EOF(-EPERM));
 }
 
+TEST(ERRNO_IS_TRANSIENT) {
+        assert_se( ERRNO_IS_NEG_TRANSIENT(-EINTR));
+        assert_se(!ERRNO_IS_NEG_TRANSIENT(EINTR));
+        assert_se( ERRNO_IS_TRANSIENT(-EINTR));
+        assert_se( ERRNO_IS_TRANSIENT(EINTR));
+}
+
 DEFINE_TEST_MAIN(LOG_INFO);
