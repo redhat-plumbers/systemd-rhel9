@@ -17,7 +17,7 @@ flowchart LR
 
 ## Filing issues
 
-When you find an issue with systemd used in CentOS Stream or RHEL, please file an issue in [Jira ticket system](https://issues.redhat.com/secure/CreateIssueDetails!init.jspa?pid=12332745&issuetype=1&components=12380515).
+When you find an issue with systemd used in **CentOS Stream** or **RHEL**, please file an issue in Red Hat [Jira ticket system](https://issues.redhat.com/secure/CreateIssueDetails!init.jspa?pid=12332745&issuetype=1&components=12380515&priority=10300).
 
 GitHub Issues are not supported tracking system. If your issue is reproducible using the latest upstream version of systemd, please consider creating [upstream issue](https://github.com/systemd/systemd/issues/new/choose).
 
@@ -51,7 +51,7 @@ Each commit has to reference the relevant approved systemd issue (see: [Filling 
 - **Related** for commits related to the referenced issue, but they don't fix it. Usually, tests and documentation.
 - **Reverts** for commits that reverts previously merged commit
 
-When referencing issues, use following structure: `<keyword>: <issue ID>`. See the example below:
+When referencing issues, use the following structure: `<keyword>: <issue ID>`. See the example below:
 
 ```md
 doc: Fix TYPO
