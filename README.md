@@ -30,7 +30,7 @@ Please see the [Code Map](docs/ARCHITECTURE.md) for information about this repos
 
 Please see the [Hacking guide](docs/HACKING.md) for information on how to hack on systemd and test your modifications.
 
-Please see our [Contribution Guidelines](docs/CONTRIBUTING.md) for more information about filing GitHub Issues and posting GitHub Pull Requests.
+Please see our [Contribution Guidelines](CONTRIBUTING.md) for more information about filing GitHub Issues and posting GitHub Pull Requests.
 
 When preparing patches for systemd, please follow our [Coding Style Guidelines](docs/CODING_STYLE.md).
 
