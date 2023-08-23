@@ -499,6 +499,20 @@
 
            <listitem><para>Same as naming scheme <constant>rhel-9.3</constant>.</para></listitem>
         </varlistentry>
+
+        <varlistentry>
+            <term><constant>rhel-9.5</constant></term>
+
+          <listitem><para>Never generate a slot name when a PCI bridge is detected.</para>
+
+          <para>Since version <constant>"rhel-9.0"</constant>, we have generated slot-based names
+          for PCI multifunction devices, because we assumed that it is enough to use function numbers
+          to distinguish between devices. However, name conflict can occur if these devices are not
+          children of the same PCI bridge, e.g. there are multiple PCI bridges in the same slot.
+          </para>
+          </listitem>
+        </varlistentry>
+
       </variablelist>
 
     <para>By default <constant>rhel-9.0</constant> is used.</para>
