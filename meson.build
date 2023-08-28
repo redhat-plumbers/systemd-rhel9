@@ -3861,9 +3861,13 @@ ukify = custom_target(
         command : [jinja2_cmdline, '@INPUT@', '@OUTPUT@'],
         install : want_ukify,
         install_mode : 'rwxr-xr-x',
-        install_dir : rootlibexecdir)
+        install_dir : bindir)
 if want_ukify
         public_programs += ukify
+
+        meson.add_install_script(sh, '-c',
+                                 ln_s.format(bindir / 'ukify',
+                                             rootlibexecdir / 'ukify'))
 endif
 
 if want_tests != 'false' and want_kernel_install
