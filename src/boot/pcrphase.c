@@ -165,7 +165,7 @@ static int determine_banks(Tpm2Context *c, unsigned target_pcr_nr) {
 
         r = tpm2_get_good_pcr_banks_strv(c, UINT32_C(1) << target_pcr_nr, &l);
         if (r < 0)
-                return r;
+                return log_error_errno(r, "Could not verify pcr banks: %m");
 
         strv_free_and_replace(arg_banks, l);
         return 0;
@@ -343,7 +343,7 @@ static int run(int argc, char *argv[]) {
         _cleanup_(tpm2_context_unrefp) Tpm2Context *c = NULL;
         r = tpm2_context_new(arg_tpm2_device, &c);
         if (r < 0)
-                return r;
+                return log_error_errno(r, "Failed to create TPM2 context: %m");
 
         r = determine_banks(c, target_pcr_nr);
         if (r < 0)
@@ -359,7 +359,7 @@ static int run(int argc, char *argv[]) {
 
         r = tpm2_extend_bytes(c, arg_banks, target_pcr_nr, word, length, NULL, 0);
         if (r < 0)
-                return r;
+                return log_error_errno(r, "Could not extend PCR: %m");
 
         log_struct(LOG_INFO,
                    "MESSAGE_ID=" SD_MESSAGE_TPM_PCR_EXTEND_STR,
