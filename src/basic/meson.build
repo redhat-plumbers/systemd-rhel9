@@ -182,6 +182,7 @@ basic_sources = files(
         'path-util.h',
         'percent-util.c',
         'percent-util.h',
+        'pidref.c',
         'prioq.c',
         'prioq.h',
         'proc-cmdline.c',
