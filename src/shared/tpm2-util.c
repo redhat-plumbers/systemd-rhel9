@@ -3889,7 +3889,7 @@ int tpm2_tpm2b_public_from_pem(const void *pem, size_t pem_size, TPM2B_PUBLIC *r
  * objects are required, while the seed is optional. This is not a (publicly) standard format, this is
  * specific to how we currently store the sealed object. This 'blob' can be unmarshalled by
  * tpm2_unmarshal_blob(). */
-static int tpm2_marshal_blob(
+int tpm2_marshal_blob(
                 const TPM2B_PUBLIC *public,
                 const TPM2B_PRIVATE *private,
                 const TPM2B_ENCRYPTED_SECRET *seed,
@@ -3939,7 +3939,7 @@ static int tpm2_marshal_blob(
  * in the 'blob', while the seed is optional. This is not a (publicly) standard format, this is specific to
  * how we currently store the sealed object. This expects the 'blob' to have been created by
  * tpm2_marshal_blob(). */
-static int tpm2_unmarshal_blob(
+int tpm2_unmarshal_blob(
                 const void *blob,
                 size_t blob_size,
                 TPM2B_PUBLIC *ret_public,
@@ -4197,7 +4197,8 @@ static int tpm2_kdfe(
 
         void *end = mempcpy(mempcpy(stpcpy(info, label) + 1, context_u, context_u_size), context_v, context_v_size);
         /* assert we copied exactly the right amount that we allocated */
-        assert(end > info && (uintptr_t) end - (uintptr_t) info == info_len);
+        /* Use assert_se() here to avoid emitting warning with -DNDEBUG */
+        assert_se(end > info && (uintptr_t) end - (uintptr_t) info == info_len);
 
         _cleanup_free_ void *buf = NULL;
         r = kdf_ss_derive(
