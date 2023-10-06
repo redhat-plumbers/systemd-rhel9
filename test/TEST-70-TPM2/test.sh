@@ -12,6 +12,11 @@ TEST_REQUIRE_INSTALL_TESTS=0
 
 command -v swtpm >/dev/null 2>&1 || exit 0
 command -v tpm2_pcrextend >/dev/null 2>&1 || exit 0
+command -v openssl >/dev/null 2>&1 || exit 0
+command -v tpm2_createprimary >/dev/null 2>&1 || exit 0
+command -v tpm2_evictcontrol >/dev/null 2>&1 || exit 0
+command -v tpm2_flushcontext >/dev/null 2>&1 || exit 0
+
 
 test_append_files() {
         local workspace="${1:?}"
@@ -22,6 +27,9 @@ test_append_files() {
         inst_binary tpm2_pcrextend
         inst_binary tpm2_pcrread
         inst_binary openssl
+        inst_binary tpm2_createprimary
+        inst_binary tpm2_evictcontrol
+        inst_binary tpm2_flushcontext
 }
 
 TEST_70_TPM_DEVICE="tpm-tis"
