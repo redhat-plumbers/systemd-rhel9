@@ -5,9 +5,19 @@ set -o pipefail
 
 export SYSTEMD_LOG_LEVEL=debug
 
+trap cleanup ERR
+cleanup() {
+    # Evict the TPM primary key that we persisted
+    if [[ -n $persistent ]]; then
+        tpm2_evictcontrol -c "$persistent"
+    fi
+}
+persistent=""
+
 # Prepare fresh disk image
 img="/var/tmp/test.img"
 truncate -s 20M $img
+
 echo -n passphrase >/tmp/passphrase
 cryptsetup luksFormat -q --pbkdf pbkdf2 --pbkdf-force-iterations 1000 --use-urandom $img /tmp/passphrase
 
@@ -93,6 +103,57 @@ if tpm_has_pcr sha256 12; then
 
     rm -f /tmp/pcr.dat
 fi
+
+# Use default (0) seal key handle
+systemd-cryptenroll --wipe-slot=tpm2 "$img"
+PASSWORD=passphrase systemd-cryptenroll --tpm2-device=auto --tpm2-seal-key-handle=0 "$img"
+/usr/lib/systemd/systemd-cryptsetup attach test-volume "$img" - tpm2-device=auto,headless=1
+/usr/lib/systemd/systemd-cryptsetup detach test-volume
+
+systemd-cryptenroll --wipe-slot=tpm2 "$img"
+PASSWORD=passphrase systemd-cryptenroll --tpm2-device=auto --tpm2-seal-key-handle=0x0 "$img"
+/usr/lib/systemd/systemd-cryptsetup attach test-volume "$img" - tpm2-device=auto,headless=1
+/usr/lib/systemd/systemd-cryptsetup detach test-volume
+
+# Use SRK seal key handle
+systemd-cryptenroll --wipe-slot=tpm2 "$img"
+PASSWORD=passphrase systemd-cryptenroll --tpm2-device=auto --tpm2-seal-key-handle=81000001 "$img"
+/usr/lib/systemd/systemd-cryptsetup attach test-volume "$img" - tpm2-device=auto,headless=1
+/usr/lib/systemd/systemd-cryptsetup detach test-volume
+
+systemd-cryptenroll --wipe-slot=tpm2 "$img"
+PASSWORD=passphrase systemd-cryptenroll --tpm2-device=auto --tpm2-seal-key-handle=0x81000001 "$img"
+/usr/lib/systemd/systemd-cryptsetup attach test-volume "$img" - tpm2-device=auto,headless=1
+/usr/lib/systemd/systemd-cryptsetup detach test-volume
+
+# Test invalid ranges: pcr, nv, session, permanent
+systemd-cryptenroll --wipe-slot=tpm2 "$img"
+(! PASSWORD=passphrase systemd-cryptenroll --tpm2-device=auto --tpm2-seal-key-handle=7 "$img")          # PCR
+(! PASSWORD=passphrase systemd-cryptenroll --tpm2-device=auto --tpm2-seal-key-handle=0x01000001 "$img") # NV index
+(! PASSWORD=passphrase systemd-cryptenroll --tpm2-device=auto --tpm2-seal-key-handle=0x02000001 "$img") # HMAC/loaded session
+(! PASSWORD=passphrase systemd-cryptenroll --tpm2-device=auto --tpm2-seal-key-handle=0x03000001 "$img") # Policy/saved session
+(! PASSWORD=passphrase systemd-cryptenroll --tpm2-device=auto --tpm2-seal-key-handle=0x40000001 "$img") # Permanent
+
+# Use non-SRK persistent seal key handle (by creating/persisting new key)
+primary=/tmp/primary.ctx
+tpm2_createprimary -c "$primary"
+persistent_line=$(tpm2_evictcontrol -c "$primary" | grep persistent-handle)
+persistent="0x${persistent_line##*0x}"
+tpm2_flushcontext -t
+
+systemd-cryptenroll --wipe-slot=tpm2 "$img"
+PASSWORD=passphrase systemd-cryptenroll --tpm2-device=auto --tpm2-seal-key-handle="${persistent#0x}" "$img"
+/usr/lib/systemd/systemd-cryptsetup attach test-volume "$img" - tpm2-device=auto,headless=1
+/usr/lib/systemd/systemd-cryptsetup detach test-volume
+
+systemd-cryptenroll --wipe-slot=tpm2 "$img"
+PASSWORD=passphrase systemd-cryptenroll --tpm2-device=auto --tpm2-seal-key-handle="$persistent" "$img"
+/usr/lib/systemd/systemd-cryptsetup attach test-volume "$img" - tpm2-device=auto,headless=1
+/usr/lib/systemd/systemd-cryptsetup detach test-volume
+
+tpm2_evictcontrol -c "$persistent"
+persistent=""
+rm -f "$primary"
 
 rm $img
 
@@ -293,6 +354,8 @@ systemd-cryptenroll --wipe-slot=10240000 $img_2 && { echo 'unexpected success'; 
 
 #fido2_multiple_auto
 systemd-cryptenroll --fido2-device=auto --unlock-fido2-device=auto $img_2 && { echo 'unexpected success'; exit 1; }
+
+cleanup
 
 echo OK >/testok
 
