@@ -74,7 +74,8 @@ jobs:
         with:
           pr-number: ${{ matrix.pr-number }}
 
-      - id: commit-linter
+      - if: ${{ !cancelled() }}
+        id: commit-linter
         name: Lint Commits
         uses: redhat-plumbers-in-action/advanced-commit-linter@v2
         with:
@@ -82,7 +83,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       # Validates tracker, changes tracker status, updates PR title
-      - id: tracker-validator
+      - if: ${{ !cancelled() }}
+        id: tracker-validator
         name: Validate Tracker
         uses: redhat-plumbers-in-action/tracker-validator@v1
         with:
@@ -96,5 +98,9 @@ jobs:
           jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # TODO: merge PR if all checks passed
-      # TODO: add comment to Tracker that PR was merged ...
+      - if: ${{ !cancelled() }}
+        name: Pull Request Validator
+        uses: redhat-plumbers-in-action/pull-request-validator@v1
+        with:
+          pr-metadata: ${{ steps.metadata.outputs.metadata }}
+          token: ${{ secrets.GITHUB_TOKEN }}
