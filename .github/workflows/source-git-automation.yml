@@ -47,7 +47,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
   # Validates tracker, changes tracker status, updates PR title
-  tracker-validation:
+  tracker-validator:
+    if: ${{ !cancelled() }}
     needs: [ download-metadata, commit-linter ]
     runs-on: ubuntu-latest
 
@@ -67,4 +68,19 @@ jobs:
           bugzilla-api-token: ${{ secrets.BUGZILLA_API_TOKEN }}
           jira-instance: https://issues.redhat.com
           jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  pull-request-validator:
+    needs: [ download-metadata ]
+    runs-on: ubuntu-latest
+
+    permissions:
+      checks: write
+      pull-requests: write
+
+    steps:
+      - name: Pull Request Validator
+        uses: redhat-plumbers-in-action/pull-request-validator@v1
+        with:
+          pr-metadata: ${{ needs.download-metadata.outputs.pr-metadata }}
           token: ${{ secrets.GITHUB_TOKEN }}
