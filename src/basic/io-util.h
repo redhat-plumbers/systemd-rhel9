@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 
+#include "alloc-util.h"
 #include "macro.h"
 #include "time-util.h"
 
@@ -78,6 +79,27 @@ static inline bool FILE_SIZE_VALID_OR_INFINITY(uint64_t l) {
 #define IOVEC_MAKE(base, len) (struct iovec) IOVEC_INIT(base, len)
 #define IOVEC_INIT_STRING(string) IOVEC_INIT((char*) string, strlen(string))
 #define IOVEC_MAKE_STRING(string) (struct iovec) IOVEC_INIT_STRING(string)
+
+#define TAKE_IOVEC(p) TAKE_GENERIC((p), struct iovec, IOVEC_NULL)
+
+static inline void iovec_done(struct iovec *iovec) {
+        /* A _cleanup_() helper that frees the iov_base in the iovec */
+        assert(iovec);
+
+        iovec->iov_base = mfree(iovec->iov_base);
+        iovec->iov_len = 0;
+}
+
+static inline void iovec_done_erase(struct iovec *iovec) {
+        assert(iovec);
+
+        iovec->iov_base = erase_and_free(iovec->iov_base);
+        iovec->iov_len = 0;
+}
+
+static inline bool iovec_is_set(const struct iovec *iov) {
+        return iov && iov->iov_len > 0 && iov->iov_base;
+}
 
 char* set_iovec_string_field(struct iovec *iovec, size_t *n_iovec, const char *field, const char *value);
 char* set_iovec_string_field_free(struct iovec *iovec, size_t *n_iovec, const char *field, char *value);
