@@ -17,6 +17,8 @@ SUBSYSTEM=="rtc", KERNEL=="rtc0", SYMLINK+="rtc", OPTIONS+="link_priority=-100"
 SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", IMPORT{builtin}="usb_id", IMPORT{builtin}="hwdb --subsystem=usb"
 ENV{MODALIAS}!="", IMPORT{builtin}="hwdb --subsystem=$env{SUBSYSTEM}"
 
+SUBSYSTEM=="net", IMPORT{builtin}="net_driver"
+
 ACTION!="add", GOTO="default_end"
 
 SUBSYSTEM=="tty", KERNEL=="ptmx", GROUP="tty", MODE="0666"
