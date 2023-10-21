@@ -141,7 +141,7 @@ int dlopen_tpm2(void) {
                         DLSYM_ARG(Tss2_MU_TPMT_PUBLIC_Marshal));
 }
 
-static inline void Esys_Freep(void *p) {
+void Esys_Freep(void *p) {
         if (*(void**) p)
                 sym_Esys_Free(*(void**) p);
 }
@@ -732,6 +732,35 @@ int tpm2_handle_new(Tpm2Context *context, Tpm2Handle **ret_handle) {
         return 0;
 }
 
+static int tpm2_read_public(
+                Tpm2Context *c,
+                const Tpm2Handle *session,
+                const Tpm2Handle *handle,
+                TPM2B_PUBLIC **ret_public,
+                TPM2B_NAME **ret_name,
+                TPM2B_NAME **ret_qname) {
+
+        TSS2_RC rc;
+
+        assert(c);
+        assert(handle);
+
+        rc = sym_Esys_ReadPublic(
+                        c->esys_context,
+                        handle->esys_handle,
+                        session ? session->esys_handle : ESYS_TR_NONE,
+                        ESYS_TR_NONE,
+                        ESYS_TR_NONE,
+                        ret_public,
+                        ret_name,
+                        ret_qname);
+        if (rc != TSS2_RC_SUCCESS)
+                return log_debug_errno(SYNTHETIC_ERRNO(ENOTRECOVERABLE),
+                                       "Failed to read public info: %s", sym_Tss2_RC_Decode(rc));
+
+        return 0;
+}
+
 /* Create a Tpm2Handle object that references a pre-existing handle in the TPM, at the handle index provided.
  * This should be used only for persistent, transient, or NV handles; and the handle must already exist in
  * the TPM at the specified handle index. The handle index should not be 0. Returns 1 if found, 0 if the
@@ -978,35 +1007,6 @@ static int tpm2_credit_random(Tpm2Context *c) {
         return 0;
 }
 
-int tpm2_read_public(
-                Tpm2Context *c,
-                const Tpm2Handle *session,
-                const Tpm2Handle *handle,
-                TPM2B_PUBLIC **ret_public,
-                TPM2B_NAME **ret_name,
-                TPM2B_NAME **ret_qname) {
-
-        TSS2_RC rc;
-
-        assert(c);
-        assert(handle);
-
-        rc = sym_Esys_ReadPublic(
-                        c->esys_context,
-                        handle->esys_handle,
-                        session ? session->esys_handle : ESYS_TR_NONE,
-                        ESYS_TR_NONE,
-                        ESYS_TR_NONE,
-                        ret_public,
-                        ret_name,
-                        ret_qname);
-        if (rc != TSS2_RC_SUCCESS)
-                return log_debug_errno(SYNTHETIC_ERRNO(ENOTRECOVERABLE),
-                                       "Failed to read public info: %s", sym_Tss2_RC_Decode(rc));
-
-        return 0;
-}
-
 /* Get one of the legacy primary key templates.
  *
  * The legacy templates should only be used for older sealed data that did not use the SRK. Instead of a
@@ -1194,7 +1194,7 @@ static int tpm2_get_srk(
 }
 
 /* Get the SRK, creating one if needed. Returns 0 on success, or < 0 on error. */
-static int tpm2_get_or_create_srk(
+int tpm2_get_or_create_srk(
                 Tpm2Context *c,
                 const Tpm2Handle *session,
                 TPM2B_PUBLIC **ret_public,
@@ -1208,7 +1208,7 @@ static int tpm2_get_or_create_srk(
         if (r < 0)
                 return r;
         if (r == 1)
-                return 0;
+                return 0; /* 0 → SRK already set up */
 
         /* No SRK, create and persist one */
         TPM2B_PUBLIC template = { .size = sizeof(TPMT_PUBLIC), };
@@ -1242,7 +1242,7 @@ static int tpm2_get_or_create_srk(
                 /* This should never happen. */
                 return log_debug_errno(SYNTHETIC_ERRNO(ENOTRECOVERABLE), "SRK we just persisted couldn't be found.");
 
-        return 0;
+        return 1; /* > 0 → SRK newly set up */
 }
 
 /* Utility functions for TPMS_PCR_SELECTION. */
