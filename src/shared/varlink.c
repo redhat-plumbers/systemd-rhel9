@@ -1771,6 +1771,26 @@ int varlink_notifyb(Varlink *v, ...) {
         return varlink_notify(v, parameters);
 }
 
+int varlink_dispatch(Varlink *v, JsonVariant *parameters, const JsonDispatch table[], void *userdata) {
+        const char *bad_field = NULL;
+        int r;
+
+        assert_return(v, -EINVAL);
+        assert_return(table, -EINVAL);
+
+        /* A wrapper around json_dispatch_full() that returns a nice InvalidParameter error if we hit a problem with some field. */
+
+        r = json_dispatch_full(parameters, table, /* bad= */ NULL, /* flags= */ 0, userdata, &bad_field);
+        if (r < 0) {
+                if (bad_field)
+                        return varlink_errorb(v, VARLINK_ERROR_INVALID_PARAMETER,
+                                              JSON_BUILD_OBJECT(JSON_BUILD_PAIR("parameter", JSON_BUILD_STRING(bad_field))));
+                return r;
+        }
+
+        return 0;
+}
+
 int varlink_bind_reply(Varlink *v, VarlinkReply callback) {
         assert_return(v, -EINVAL);
 

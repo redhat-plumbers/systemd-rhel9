@@ -363,7 +363,8 @@ typedef struct JsonDispatch {
         JsonDispatchFlags flags;
 } JsonDispatch;
 
-int json_dispatch(JsonVariant *v, const JsonDispatch table[], JsonDispatchCallback bad, JsonDispatchFlags flags, void *userdata);
+int json_dispatch_full(JsonVariant *v, const JsonDispatch table[], JsonDispatchCallback bad, JsonDispatchFlags flags, void *userdata, const char **reterr_bad_field);
+int json_dispatch(JsonVariant *v, const JsonDispatch table[], JsonDispatchFlags flags, void *userdata);
 
 int json_dispatch_string(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata);
 int json_dispatch_const_string(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata);
