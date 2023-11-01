@@ -107,6 +107,9 @@ int varlink_error_errno(Varlink *v, int error);
 int varlink_notify(Varlink *v, JsonVariant *parameters);
 int varlink_notifyb(Varlink *v, ...);
 
+/* Parsing incoming data via json_dispatch() and generate a nice error on parse errors */
+int varlink_dispatch(Varlink *v, JsonVariant *parameters, const JsonDispatch table[], void *userdata);
+
 /* Bind a disconnect, reply or timeout callback */
 int varlink_bind_reply(Varlink *v, VarlinkReply reply);
 
