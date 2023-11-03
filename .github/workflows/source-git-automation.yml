@@ -84,3 +84,25 @@ jobs:
         with:
           pr-metadata: ${{ needs.download-metadata.outputs.pr-metadata }}
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  auto-merge:
+    needs: [ download-metadata, commit-linter, tracker-validator, pull-request-validator ]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      checks: write
+      pull-requests: write
+
+    steps:
+      - name: Auto Merge
+        uses: redhat-plumbers-in-action/auto-merge@v1
+        with:
+          pr-metadata: ${{ needs.download-metadata.outputs.pr-metadata }}
+          tracker: ${{ fromJSON(needs.commit-linter.outputs.validated-pr-metadata).validation.tracker.id }}
+          tracker-type: ${{ fromJSON(needs.commit-linter.outputs.validated-pr-metadata).validation.tracker.type }}
+          bugzilla-instance: https://bugzilla.redhat.com
+          bugzilla-api-token: ${{ secrets.BUGZILLA_API_TOKEN }}
+          jira-instance: https://issues.redhat.com
+          jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
