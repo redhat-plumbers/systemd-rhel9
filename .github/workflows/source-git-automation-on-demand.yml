@@ -60,6 +60,7 @@ jobs:
         pr-number: ${{ inputs.pr-number == 0 && fromJSON(needs.gather-pull-requests.outputs.pr-numbers) || fromJSON(needs.gather-pull-requests.outputs.pr-numbers-manual) }}
 
     permissions:
+      contents: write
       statuses: write
       checks: write
       pull-requests: write
@@ -103,4 +104,17 @@ jobs:
         uses: redhat-plumbers-in-action/pull-request-validator@v1
         with:
           pr-metadata: ${{ steps.metadata.outputs.metadata }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: auto-merge
+        name: Auto Merge
+        uses: redhat-plumbers-in-action/auto-merge@v1
+        with:
+          pr-metadata: ${{ steps.metadata.outputs.metadata }}
+          tracker: ${{ fromJSON(steps.commit-linter.outputs.validated-pr-metadata).validation.tracker.id }}
+          tracker-type: ${{ fromJSON(steps.commit-linter.outputs.validated-pr-metadata).validation.tracker.type }}
+          bugzilla-instance: https://bugzilla.redhat.com
+          bugzilla-api-token: ${{ secrets.BUGZILLA_API_TOKEN }}
+          jira-instance: https://issues.redhat.com
+          jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
           token: ${{ secrets.GITHUB_TOKEN }}
