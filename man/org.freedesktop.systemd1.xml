@@ -2629,6 +2629,8 @@ node /org/freedesktop/systemd1/unit/avahi_2ddaemon_2eservice {
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t MemoryCurrent = ...;
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
+      readonly t MemoryPeak = ...;
+      @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t MemoryAvailable = ...;
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t CPUUsageNSec = ...;
@@ -3203,6 +3205,8 @@ node /org/freedesktop/systemd1/unit/avahi_2ddaemon_2eservice {
     <!--property ControlGroupId is not documented!-->
 
     <!--property MemoryCurrent is not documented!-->
+
+    <!--property MemoryPeak is not documented!-->
 
     <!--property CPUUsageNSec is not documented!-->
 
@@ -3783,6 +3787,8 @@ node /org/freedesktop/systemd1/unit/avahi_2ddaemon_2eservice {
     <variablelist class="dbus-property" generated="True" extra-ref="ControlGroupId"/>
 
     <variablelist class="dbus-property" generated="True" extra-ref="MemoryCurrent"/>
+
+    <variablelist class="dbus-property" generated="True" extra-ref="MemoryPeak"/>
 
     <variablelist class="dbus-property" generated="True" extra-ref="MemoryAvailable"/>
 
@@ -4521,6 +4527,8 @@ node /org/freedesktop/systemd1/unit/avahi_2ddaemon_2esocket {
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t MemoryCurrent = ...;
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
+      readonly t MemoryPeak = ...;
+      @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t MemoryAvailable = ...;
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t CPUUsageNSec = ...;
@@ -5118,6 +5126,8 @@ node /org/freedesktop/systemd1/unit/avahi_2ddaemon_2esocket {
 
     <!--property MemoryCurrent is not documented!-->
 
+    <!--property MemoryPeak is not documented!-->
+
     <!--property CPUUsageNSec is not documented!-->
 
     <!--property EffectiveCPUs is not documented!-->
@@ -5689,6 +5699,8 @@ node /org/freedesktop/systemd1/unit/avahi_2ddaemon_2esocket {
     <variablelist class="dbus-property" generated="True" extra-ref="ControlGroupId"/>
 
     <variablelist class="dbus-property" generated="True" extra-ref="MemoryCurrent"/>
+
+    <variablelist class="dbus-property" generated="True" extra-ref="MemoryPeak"/>
 
     <variablelist class="dbus-property" generated="True" extra-ref="MemoryAvailable"/>
 
@@ -6316,6 +6328,8 @@ node /org/freedesktop/systemd1/unit/home_2emount {
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t MemoryCurrent = ...;
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
+      readonly t MemoryPeak = ...;
+      @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t MemoryAvailable = ...;
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t CPUUsageNSec = ...;
@@ -6841,6 +6855,8 @@ node /org/freedesktop/systemd1/unit/home_2emount {
 
     <!--property MemoryCurrent is not documented!-->
 
+    <!--property MemoryPeak is not documented!-->
+
     <!--property CPUUsageNSec is not documented!-->
 
     <!--property EffectiveCPUs is not documented!-->
@@ -7330,6 +7346,8 @@ node /org/freedesktop/systemd1/unit/home_2emount {
     <variablelist class="dbus-property" generated="True" extra-ref="ControlGroupId"/>
 
     <variablelist class="dbus-property" generated="True" extra-ref="MemoryCurrent"/>
+
+    <variablelist class="dbus-property" generated="True" extra-ref="MemoryPeak"/>
 
     <variablelist class="dbus-property" generated="True" extra-ref="MemoryAvailable"/>
 
@@ -8084,6 +8102,8 @@ node /org/freedesktop/systemd1/unit/dev_2dsda3_2eswap {
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t MemoryCurrent = ...;
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
+      readonly t MemoryPeak = ...;
+      @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t MemoryAvailable = ...;
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t CPUUsageNSec = ...;
@@ -8595,6 +8615,8 @@ node /org/freedesktop/systemd1/unit/dev_2dsda3_2eswap {
 
     <!--property MemoryCurrent is not documented!-->
 
+    <!--property MemoryPeak is not documented!-->
+
     <!--property CPUUsageNSec is not documented!-->
 
     <!--property EffectiveCPUs is not documented!-->
@@ -9070,6 +9092,8 @@ node /org/freedesktop/systemd1/unit/dev_2dsda3_2eswap {
     <variablelist class="dbus-property" generated="True" extra-ref="ControlGroupId"/>
 
     <variablelist class="dbus-property" generated="True" extra-ref="MemoryCurrent"/>
+
+    <variablelist class="dbus-property" generated="True" extra-ref="MemoryPeak"/>
 
     <variablelist class="dbus-property" generated="True" extra-ref="MemoryAvailable"/>
 
@@ -9683,6 +9707,8 @@ node /org/freedesktop/systemd1/unit/system_2eslice {
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t MemoryCurrent = ...;
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
+      readonly t MemoryPeak = ...;
+      @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t MemoryAvailable = ...;
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t CPUUsageNSec = ...;
@@ -9835,6 +9861,8 @@ node /org/freedesktop/systemd1/unit/system_2eslice {
     <!--property ControlGroupId is not documented!-->
 
     <!--property MemoryCurrent is not documented!-->
+
+    <!--property MemoryPeak is not documented!-->
 
     <!--property CPUUsageNSec is not documented!-->
 
@@ -9991,6 +10019,8 @@ node /org/freedesktop/systemd1/unit/system_2eslice {
     <variablelist class="dbus-property" generated="True" extra-ref="ControlGroupId"/>
 
     <variablelist class="dbus-property" generated="True" extra-ref="MemoryCurrent"/>
+
+    <variablelist class="dbus-property" generated="True" extra-ref="MemoryPeak"/>
 
     <variablelist class="dbus-property" generated="True" extra-ref="MemoryAvailable"/>
 
@@ -10174,6 +10204,8 @@ node /org/freedesktop/systemd1/unit/session_2d1_2escope {
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t MemoryCurrent = ...;
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
+      readonly t MemoryPeak = ...;
+      @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t MemoryAvailable = ...;
       @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
       readonly t CPUUsageNSec = ...;
@@ -10346,6 +10378,8 @@ node /org/freedesktop/systemd1/unit/session_2d1_2escope {
     <!--property ControlGroupId is not documented!-->
 
     <!--property MemoryCurrent is not documented!-->
+
+    <!--property MemoryPeak is not documented!-->
 
     <!--property CPUUsageNSec is not documented!-->
 
@@ -10532,6 +10566,8 @@ node /org/freedesktop/systemd1/unit/session_2d1_2escope {
     <variablelist class="dbus-property" generated="True" extra-ref="ControlGroupId"/>
 
     <variablelist class="dbus-property" generated="True" extra-ref="MemoryCurrent"/>
+
+    <variablelist class="dbus-property" generated="True" extra-ref="MemoryPeak"/>
 
     <variablelist class="dbus-property" generated="True" extra-ref="MemoryAvailable"/>
 
