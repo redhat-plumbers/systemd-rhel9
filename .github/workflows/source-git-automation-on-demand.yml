@@ -63,6 +63,7 @@ jobs:
       contents: write
       statuses: write
       checks: write
+      issues: write
       pull-requests: write
 
     steps:
