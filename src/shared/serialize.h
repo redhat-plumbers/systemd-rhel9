@@ -5,6 +5,7 @@
 
 #include "fdset.h"
 #include "macro.h"
+#include "ratelimit.h"
 #include "string-util.h"
 #include "time-util.h"
 
@@ -15,6 +16,7 @@ int serialize_fd(FILE *f, FDSet *fds, const char *key, int fd);
 int serialize_usec(FILE *f, const char *key, usec_t usec);
 int serialize_dual_timestamp(FILE *f, const char *key, const dual_timestamp *t);
 int serialize_strv(FILE *f, const char *key, char **l);
+int serialize_ratelimit(FILE *f, const char *key, const RateLimit *rl);
 
 static inline int serialize_bool(FILE *f, const char *key, bool b) {
         return serialize_item(f, key, yes_no(b));
@@ -23,5 +25,6 @@ static inline int serialize_bool(FILE *f, const char *key, bool b) {
 int deserialize_usec(const char *value, usec_t *timestamp);
 int deserialize_dual_timestamp(const char *value, dual_timestamp *t);
 int deserialize_environment(const char *value, char ***environment);
+void deserialize_ratelimit(RateLimit *rl, const char *name, const char *value);
 
 int open_serialization_fd(const char *ident);

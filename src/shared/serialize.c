@@ -130,6 +130,17 @@ int serialize_strv(FILE *f, const char *key, char **l) {
         return ret;
 }
 
+int serialize_ratelimit(FILE *f, const char *key, const RateLimit *rl) {
+        assert(rl);
+
+        return serialize_item_format(f, key,
+                                     USEC_FMT " " USEC_FMT " %u %u",
+                                     rl->begin,
+                                     rl->interval,
+                                     rl->num,
+                                     rl->burst);
+}
+
 int deserialize_usec(const char *value, usec_t *ret) {
         int r;
 
@@ -192,6 +203,22 @@ int deserialize_environment(const char *value, char ***list) {
                 return log_error_errno(r, "Failed to append environment variable: %m");
 
         return 0;
+}
+
+void deserialize_ratelimit(RateLimit *rl, const char *name, const char *value) {
+        usec_t begin, interval;
+        unsigned num, burst;
+
+        assert(rl);
+        assert(name);
+        assert(value);
+
+        if (sscanf(value, USEC_FMT " " USEC_FMT " %u %u", &begin, &interval, &num, &burst) != 4)
+                return log_notice("Failed to parse %s, ignoring: %s", name, value);
+
+        /* Preserve the counter only if the configuration didn't change. */
+        rl->num = (interval == rl->interval && burst == rl->burst) ? num : 0;
+        rl->begin = begin;
 }
 
 int open_serialization_fd(const char *ident) {
