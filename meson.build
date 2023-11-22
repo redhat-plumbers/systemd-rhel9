@@ -1916,6 +1916,18 @@ subdir('src/boot/efi')
 
 ############################################################
 
+pymod = import('python')
+python = pymod.find_installation('python3', required : true, modules : ['jinja2'])
+python_39 = python.language_version().version_compare('>=3.9')
+
+want_ukify = get_option('ukify')
+if want_ukify and not python_39
+    error('ukify requires Python >= 3.9')
+endif
+conf.set10('ENABLE_UKIFY', want_ukify)
+
+############################################################
+
 generate_gperfs = find_program('tools/generate-gperfs.py')
 make_autosuspend_rules_py = find_program('tools/make-autosuspend-rules.py')
 make_directive_index_py = find_program('tools/make-directive-index.py')
@@ -2164,6 +2176,7 @@ subdir('src/test')
 subdir('src/fuzz')
 subdir('rules.d')
 subdir('test')
+subdir('src/ukify/test')  # needs to be last for test_env variable
 
 ############################################################
 
@@ -3840,6 +3853,18 @@ exe = custom_target(
         install_mode : 'rwxr-xr-x',
         install_dir : bindir)
 public_programs += exe
+
+ukify = custom_target(
+        'ukify',
+        input : 'src/ukify/ukify.py',
+        output : 'ukify',
+        command : [jinja2_cmdline, '@INPUT@', '@OUTPUT@'],
+        install : want_ukify,
+        install_mode : 'rwxr-xr-x',
+        install_dir : rootlibexecdir)
+if want_ukify
+        public_programs += ukify
+endif
 
 if want_tests != 'false' and want_kernel_install
         test('test-kernel-install',
