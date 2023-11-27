@@ -23,6 +23,7 @@ typedef enum SessionClass {
         SESSION_GREETER,
         SESSION_LOCK_SCREEN,
         SESSION_BACKGROUND,
+        SESSION_BACKGROUND_LIGHT,   /* Like SESSION_BACKGROUND, but without the service manager */
         _SESSION_CLASS_MAX,
         _SESSION_CLASS_INVALID = -EINVAL,
 } SessionClass;
