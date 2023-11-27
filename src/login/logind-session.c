@@ -1525,6 +1525,7 @@ static const char* const session_class_table[_SESSION_CLASS_MAX] = {
         [SESSION_GREETER]     = "greeter",
         [SESSION_LOCK_SCREEN] = "lock-screen",
         [SESSION_BACKGROUND]  = "background",
+        [SESSION_BACKGROUND_LIGHT]  = "background-light",
 };
 
 DEFINE_STRING_TABLE_LOOKUP(session_class, SessionClass);
