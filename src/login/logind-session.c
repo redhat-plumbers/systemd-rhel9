@@ -1029,19 +1029,21 @@ int session_get_idle_hint(Session *s, dual_timestamp *t) {
                 return s->idle_hint;
         }
 
-        /* For sessions with an explicitly configured tty, let's check its atime */
-        if (s->tty) {
-                r = get_tty_atime(s->tty, &atime);
-                if (r >= 0)
-                        goto found_atime;
-        }
+        if (s->type == SESSION_TTY) {
+                /* For sessions with an explicitly configured tty, let's check its atime */
+                if (s->tty) {
+                        r = get_tty_atime(s->tty, &atime);
+                        if (r >= 0)
+                                goto found_atime;
+                }
 
-        /* For sessions with a leader but no explicitly configured tty, let's check the controlling tty of
-         * the leader */
-        if (pid_is_valid(s->leader)) {
-                r = get_process_ctty_atime(s->leader, &atime);
-                if (r >= 0)
-                        goto found_atime;
+                /* For sessions with a leader but no explicitly configured tty, let's check the controlling tty of
+                 * the leader */
+                if (pid_is_valid(s->leader)) {
+                        r = get_process_ctty_atime(s->leader, &atime);
+                        if (r >= 0)
+                                goto found_atime;
+                }
         }
 
         if (t)
