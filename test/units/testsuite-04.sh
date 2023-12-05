@@ -230,4 +230,28 @@ systemctl daemon-reload
 systemctl restart systemd-journald.service
 journalctl --rotate
 
+# Check that using --after-cursor/--cursor-file= together with journal filters doesn't
+# skip over entries matched by the filter
+# See: https://github.com/systemd/systemd/issues/30288
+UNIT_NAME="test-cursor-$RANDOM.service"
+CURSOR_FILE="$(mktemp)"
+# Generate some messages we can match against
+journalctl --cursor-file="$CURSOR_FILE" -n1
+systemd-run --unit="$UNIT_NAME" --wait --service-type=exec bash -xec "echo hello; echo world"
+journalctl --sync
+# --after-cursor= + --unit=
+# The format of the "Starting ..." message depends on StatusUnitFormat=, so match only the beginning
+# which should be enough in this case
+[[ "$(journalctl -n 1 -p info -o cat --unit="$UNIT_NAME" --after-cursor="$(<"$CURSOR_FILE")" _PID=1 )" =~ ^Starting\  ]]
+# There should be no such messages before the cursor
+[[ -z "$(journalctl -n 1 -p info -o cat --unit="$UNIT_NAME" --after-cursor="$(<"$CURSOR_FILE")" --reverse)" ]]
+# --cursor-file= + a journal filter
+diff <(journalctl --cursor-file="$CURSOR_FILE" -p info -o cat _SYSTEMD_UNIT="$UNIT_NAME") - <<EOF
++ echo hello
+hello
++ echo world
+world
+EOF
+rm -f "$CURSOR_FILE"
+
 touch /testok
