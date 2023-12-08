@@ -3868,9 +3868,9 @@ ukify = custom_target(
 if want_ukify
         public_programs += ukify
 
-        meson.add_install_script(sh, '-c',
-                                 ln_s.format(bindir / 'ukify',
-                                             rootlibexecdir / 'ukify'))
+        meson.add_install_script(meson_make_symlink,
+                                 bindir / 'ukify',
+                                 rootlibexecdir / 'ukify')
 endif
 
 if want_tests != 'false' and want_kernel_install
