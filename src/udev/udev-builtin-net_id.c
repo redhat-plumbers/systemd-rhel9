@@ -176,11 +176,11 @@ static int dev_pci_onboard(sd_device *dev, const LinkInfo *info, NetNames *names
         assert(names);
 
         /* ACPI _DSM — device specific method for naming a PCI or PCI Express device */
-        if (sd_device_get_sysattr_value(names->pcidev, "acpi_index", &attr) >= 0)
+        if (device_get_sysattr_value_filtered(names->pcidev, "acpi_index", &attr) >= 0)
                 log_device_debug(names->pcidev, "acpi_index=%s", attr);
         else {
                 /* SMBIOS type 41 — Onboard Devices Extended Information */
-                r = sd_device_get_sysattr_value(names->pcidev, "index", &attr);
+                r = device_get_sysattr_value_filtered(names->pcidev, "index", &attr);
                 if (r < 0)
                         return r;
                 log_device_debug(names->pcidev, "index=%s", attr);
@@ -198,7 +198,7 @@ static int dev_pci_onboard(sd_device *dev, const LinkInfo *info, NetNames *names
                                               "Not a valid onboard index: %lu", idx);
 
         /* kernel provided port index for multiple ports on a single PCI function */
-        if (sd_device_get_sysattr_value(dev, "dev_port", &attr) >= 0) {
+        if (device_get_sysattr_value_filtered(dev, "dev_port", &attr) >= 0) {
                 r = safe_atolu_full(attr, 10, &dev_port);
                 if (r < 0)
                         log_device_debug_errno(dev, r, "Failed to parse dev_port, ignoring: %m");
@@ -219,7 +219,7 @@ static int dev_pci_onboard(sd_device *dev, const LinkInfo *info, NetNames *names
                          idx, strempty(info->phys_port_name), dev_port,
                          special_glyph(SPECIAL_GLYPH_ARROW_RIGHT), empty_to_na(names->pci_onboard));
 
-        if (sd_device_get_sysattr_value(names->pcidev, "label", &names->pci_onboard_label) >= 0)
+        if (device_get_sysattr_value_filtered(names->pcidev, "label", &names->pci_onboard_label) >= 0)
                 log_device_debug(dev, "Onboard label from PCI device: %s", names->pci_onboard_label);
         else
                 names->pci_onboard_label = NULL;
@@ -256,7 +256,7 @@ static int is_pci_multifunction(sd_device *dev) {
 static bool is_pci_ari_enabled(sd_device *dev) {
         const char *a;
 
-        if (sd_device_get_sysattr_value(dev, "ari_enabled", &a) < 0)
+        if (device_get_sysattr_value_filtered(dev, "ari_enabled", &a) < 0)
                 return false;
 
         return streq(a, "1");
@@ -265,7 +265,7 @@ static bool is_pci_ari_enabled(sd_device *dev) {
 static bool is_pci_bridge(sd_device *dev) {
         const char *v, *p;
 
-        if (sd_device_get_sysattr_value(dev, "modalias", &v) < 0)
+        if (device_get_sysattr_value_filtered(dev, "modalias", &v) < 0)
                 return false;
 
         if (!startswith(v, "pci:"))
@@ -305,7 +305,7 @@ static int parse_hotplug_slot_from_function_id(sd_device *dev, int slots_dirfd, 
         if (!naming_scheme_has(NAMING_SLOT_FUNCTION_ID))
                 return 0;
 
-        if (sd_device_get_sysattr_value(dev, "function_id", &attr) < 0)
+        if (device_get_sysattr_value_filtered(dev, "function_id", &attr) < 0)
                 return 0;
 
         r = safe_atou64(attr, &function_id);
@@ -362,7 +362,7 @@ static int dev_pci_slot(sd_device *dev, const LinkInfo *info, NetNames *names) {
                 func += slot * 8;
 
         /* kernel provided port index for multiple ports on a single PCI function */
-        if (sd_device_get_sysattr_value(dev, "dev_port", &attr) >= 0) {
+        if (device_get_sysattr_value_filtered(dev, "dev_port", &attr) >= 0) {
                 log_device_debug(dev, "dev_port=%s", attr);
 
                 r = safe_atolu_full(attr, 10, &dev_port);
@@ -374,7 +374,7 @@ static int dev_pci_slot(sd_device *dev, const LinkInfo *info, NetNames *names) {
                  * which thus stays initialized as 0. */
                 if (dev_port == 0 &&
                     info->iftype == ARPHRD_INFINIBAND &&
-                    sd_device_get_sysattr_value(dev, "dev_id", &attr) >= 0) {
+                    device_get_sysattr_value_filtered(dev, "dev_id", &attr) >= 0) {
                         log_device_debug(dev, "dev_id=%s", attr);
 
                         r = safe_atolu_full(attr, 10, &dev_port);
@@ -442,7 +442,7 @@ static int dev_pci_slot(sd_device *dev, const LinkInfo *info, NetNames *names) {
                         if (!path)
                                 return -ENOMEM;
 
-                        if (sd_device_get_sysattr_value(pci, path, &address) < 0)
+                        if (device_get_sysattr_value_filtered(pci, path, &address) < 0)
                                 continue;
 
                         /* match slot address with device by stripping the function */
@@ -664,7 +664,7 @@ static int dev_devicetree_onboard(sd_device *dev, NetNames *names) {
                 if (!alias_index)
                         continue;
 
-                if (sd_device_get_sysattr_value(aliases_dev, alias, &alias_path) < 0)
+                if (device_get_sysattr_value_filtered(aliases_dev, alias, &alias_path) < 0)
                         continue;
 
                 if (!path_equal(ofnode_path, alias_path))
@@ -683,7 +683,7 @@ static int dev_devicetree_onboard(sd_device *dev, NetNames *names) {
                 }
 
                 /* ...but make sure we don't have an alias conflict */
-                if (i == 0 && sd_device_get_sysattr_value(aliases_dev, conflict, NULL) >= 0)
+                if (i == 0 && device_get_sysattr_value_filtered(aliases_dev, conflict, NULL) >= 0)
                         return log_device_debug_errno(dev, SYNTHETIC_ERRNO(EEXIST),
                                         "Ethernet alias conflict: ethernet and ethernet0 both exist");
 
@@ -934,7 +934,7 @@ static int names_mac(sd_device *dev, const LinkInfo *info) {
                                               info->hw_addr.length);
 
         /* check for NET_ADDR_PERM, skip random MAC addresses */
-        r = sd_device_get_sysattr_value(dev, "addr_assign_type", &s);
+        r = device_get_sysattr_value_filtered(dev, "addr_assign_type", &s);
         if (r < 0)
                 return log_device_debug_errno(dev, r, "Failed to read addr_assign_type: %m");
         r = safe_atou(s, &i);
@@ -1070,11 +1070,11 @@ static int get_link_info(sd_device *dev, LinkInfo *info) {
         if (r < 0)
                 return r;
 
-        r = device_get_sysattr_int(dev, "iflink", &info->iflink);
+        r = device_get_sysattr_int_filtered(dev, "iflink", &info->iflink);
         if (r < 0)
                 return r;
 
-        r = device_get_sysattr_int(dev, "type", &info->iftype);
+        r = device_get_sysattr_int_filtered(dev, "type", &info->iftype);
         if (r < 0)
                 return r;
 
@@ -1082,9 +1082,9 @@ static int get_link_info(sd_device *dev, LinkInfo *info) {
         if (r < 0 && r != -ENOENT)
                 return r;
 
-        (void) sd_device_get_sysattr_value(dev, "phys_port_name", &info->phys_port_name);
+        (void) device_get_sysattr_value_filtered(dev, "phys_port_name", &info->phys_port_name);
 
-        r = sd_device_get_sysattr_value(dev, "address", &s);
+        r = device_get_sysattr_value_filtered(dev, "address", &s);
         if (r < 0 && r != -ENOENT)
                 return r;
         if (r >= 0) {
