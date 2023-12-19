@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "macro.h"
+#include "mountpoint-util.h"
 #include "string-util.h"
 #include "tests.h"
 #include "udev-util.h"
@@ -137,6 +138,9 @@ static void test_udev_resolve_subsys_kernel_one(const char *str, bool read_value
 }
 
 TEST(udev_resolve_subsys_kernel) {
+        if (path_is_mount_point("/sys", NULL, 0) <= 0)
+                return (void) log_tests_skipped("/sys is not mounted");
+
         test_udev_resolve_subsys_kernel_one("hoge", false, -EINVAL, NULL);
         test_udev_resolve_subsys_kernel_one("[hoge", false, -EINVAL, NULL);
         test_udev_resolve_subsys_kernel_one("[hoge/foo", false, -EINVAL, NULL);
