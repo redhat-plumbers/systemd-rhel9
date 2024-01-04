@@ -223,6 +223,11 @@ if pamconfdir == ''
         pamconfdir = prefixdir / 'lib/pam.d'
 endif
 
+sshconfdir = get_option('sshconfdir')
+if sshconfdir == ''
+        sshconfdir = sysconfdir / 'ssh/ssh_config.d'
+endif
+
 libcryptsetup_plugins_dir = get_option('libcryptsetup-plugins-dir')
 if libcryptsetup_plugins_dir == ''
         libcryptsetup_plugins_dir = rootlibdir / 'cryptsetup'
@@ -256,6 +261,7 @@ conf.set_quoted('ROOTLIBDIR',                                 rootlibdir)
 conf.set_quoted('ROOTLIBEXECDIR',                             rootlibexecdir)
 conf.set_quoted('ROOTPREFIX',                                 rootprefixdir)
 conf.set_quoted('ROOTPREFIX_NOSLASH',                         rootprefixdir_noslash)
+conf.set_quoted('SSHCONFDIR',                                 sshconfdir)
 conf.set_quoted('SYSCONF_DIR',                                sysconfdir)
 conf.set_quoted('SYSCTL_DIR',                                 sysctldir)
 conf.set_quoted('SYSTEMCTL_BINARY_PATH',                      rootbindir / 'systemctl')
@@ -4284,6 +4290,7 @@ summary({
         'SysV rc?.d directories' :          sysvrcnd_path,
         'PAM modules directory' :           pamlibdir,
         'PAM configuration directory' :     pamconfdir,
+        'ssh client configuration directory' : sshconfdir,
         'libcryptsetup plugins directory' : libcryptsetup_plugins_dir,
         'RPM macros directory' :            rpmmacrosdir,
         'modprobe.d directory' :            modprobedir,
