@@ -359,3 +359,5 @@ int vsock_parse_cid(const char *s, unsigned *ret);
  * protocol mismatch. */
 int socket_address_parse_unix(SocketAddress *ret_address, const char *s);
 int socket_address_parse_vsock(SocketAddress *ret_address, const char *s);
+
+int vsock_get_local_cid(unsigned *ret);
