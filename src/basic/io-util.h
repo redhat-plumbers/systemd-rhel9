@@ -11,6 +11,12 @@
 #include "macro.h"
 #include "time-util.h"
 
+/* An iovec pointing to a single NUL byte */
+#define IOVEC_NUL_BYTE (const struct iovec) {                   \
+                .iov_base = (void*) (const uint8_t[1]) { 0 },   \
+                .iov_len = 1,                                   \
+        }
+
 int flush_fd(int fd);
 
 ssize_t loop_read(int fd, void *buf, size_t nbytes, bool do_poll);
