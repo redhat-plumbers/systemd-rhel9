@@ -1,5 +1,3 @@
----
-
 name: Source git Automation Scheduled/On Demand
 on:
   schedule:
@@ -59,62 +57,17 @@ jobs:
       matrix:
         pr-number: ${{ inputs.pr-number == 0 && fromJSON(needs.gather-pull-requests.outputs.pr-numbers) || fromJSON(needs.gather-pull-requests.outputs.pr-numbers-manual) }}
 
-    permissions: write-all
-      # contents: write
-      # statuses: write
-      # checks: write
-      # pull-requests: write
+    permissions:
+      # required for merging PRs
+      contents: write
+      # required for PR comments and setting labels
+      pull-requests: write
 
     steps:
-      - name: Repository checkout
-        uses: actions/checkout@v3
-
-      - id: metadata
-        name: Gather Pull Request Metadata
-        uses: redhat-plumbers-in-action/gather-pull-request-metadata@v1
+      - name: Source-git Automation
+        uses: redhat-plumbers-in-action/source-git-automation@v1
         with:
           pr-number: ${{ matrix.pr-number }}
-
-      - if: ${{ !cancelled() }}
-        id: commit-linter
-        name: Lint Commits
-        uses: redhat-plumbers-in-action/advanced-commit-linter@v2
-        with:
-          pr-metadata: ${{ steps.metadata.outputs.metadata }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      # Validates tracker, changes tracker status, updates PR title
-      - if: ${{ !cancelled() }}
-        id: tracker-validator
-        name: Validate Tracker
-        uses: redhat-plumbers-in-action/tracker-validator@v1
-        with:
-          pr-metadata: ${{ steps.metadata.outputs.metadata }}
-          component: systemd
-          tracker: ${{ fromJSON(steps.commit-linter.outputs.validated-pr-metadata).validation.tracker.id }}
-          tracker-type: ${{ fromJSON(steps.commit-linter.outputs.validated-pr-metadata).validation.tracker.type }}
-          bugzilla-instance: https://bugzilla.redhat.com
           bugzilla-api-token: ${{ secrets.BUGZILLA_API_TOKEN }}
-          jira-instance: https://issues.redhat.com
-          jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - if: ${{ !cancelled() }}
-        name: Pull Request Validator
-        uses: redhat-plumbers-in-action/pull-request-validator@v1
-        with:
-          pr-metadata: ${{ steps.metadata.outputs.metadata }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - id: auto-merge
-        name: Auto Merge
-        uses: redhat-plumbers-in-action/auto-merge@v1
-        with:
-          pr-metadata: ${{ steps.metadata.outputs.metadata }}
-          tracker: ${{ fromJSON(steps.commit-linter.outputs.validated-pr-metadata).validation.tracker.id }}
-          tracker-type: ${{ fromJSON(steps.commit-linter.outputs.validated-pr-metadata).validation.tracker.type }}
-          bugzilla-instance: https://bugzilla.redhat.com
-          bugzilla-api-token: ${{ secrets.BUGZILLA_API_TOKEN }}
-          jira-instance: https://issues.redhat.com
           jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
           token: ${{ secrets.GITHUB_TOKEN }}
