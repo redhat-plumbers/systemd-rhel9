@@ -26,83 +26,21 @@ jobs:
         with:
           name: pr-metadata
 
-  commit-linter:
-    needs: [ download-metadata ]
-    runs-on: ubuntu-latest
-
-    outputs:
-      validated-pr-metadata: ${{ steps.commit-linter.outputs.validated-pr-metadata }}
-
-    permissions:
-      statuses: write
-      checks: write
-      pull-requests: write
-
-    steps:
-      - id: commit-linter
-        name: Lint Commits
-        uses: redhat-plumbers-in-action/advanced-commit-linter@v2
-        with:
-          pr-metadata: ${{ needs.download-metadata.outputs.pr-metadata }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  # Validates tracker, changes tracker status, updates PR title
-  tracker-validator:
-    if: ${{ !cancelled() }}
-    needs: [ download-metadata, commit-linter ]
-    runs-on: ubuntu-latest
-
-    permissions:
-      checks: write
-      pull-requests: write
-
-    steps:
-      - name: Validate Tracker
-        uses: redhat-plumbers-in-action/tracker-validator@v1
-        with:
-          pr-metadata: ${{ needs.download-metadata.outputs.pr-metadata }}
-          component: systemd
-          tracker: ${{ fromJSON(needs.commit-linter.outputs.validated-pr-metadata).validation.tracker.id }}
-          tracker-type: ${{ fromJSON(needs.commit-linter.outputs.validated-pr-metadata).validation.tracker.type }}
-          bugzilla-instance: https://bugzilla.redhat.com
-          bugzilla-api-token: ${{ secrets.BUGZILLA_API_TOKEN }}
-          jira-instance: https://issues.redhat.com
-          jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  pull-request-validator:
+  source-git-automation:
     needs: [ download-metadata ]
     runs-on: ubuntu-latest
 
     permissions:
-      checks: write
-      pull-requests: write
-
-    steps:
-      - name: Pull Request Validator
-        uses: redhat-plumbers-in-action/pull-request-validator@v1
-        with:
-          pr-metadata: ${{ needs.download-metadata.outputs.pr-metadata }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  auto-merge:
-    needs: [ download-metadata, commit-linter, tracker-validator, pull-request-validator ]
-    runs-on: ubuntu-latest
-
-    permissions:
+      # required for merging PRs
       contents: write
-      checks: write
+      # required for PR comments and setting labels
       pull-requests: write
 
     steps:
-      - name: Auto Merge
-        uses: redhat-plumbers-in-action/auto-merge@v1
+      - name: Source-git Automation
+        uses: redhat-plumbers-in-action/source-git-automation@v1
         with:
           pr-metadata: ${{ needs.download-metadata.outputs.pr-metadata }}
-          tracker: ${{ fromJSON(needs.commit-linter.outputs.validated-pr-metadata).validation.tracker.id }}
-          tracker-type: ${{ fromJSON(needs.commit-linter.outputs.validated-pr-metadata).validation.tracker.type }}
-          bugzilla-instance: https://bugzilla.redhat.com
           bugzilla-api-token: ${{ secrets.BUGZILLA_API_TOKEN }}
-          jira-instance: https://issues.redhat.com
           jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
           token: ${{ secrets.GITHUB_TOKEN }}
