@@ -1,8 +1,8 @@
 name: Source git Automation Scheduled/On Demand
 on:
   schedule:
-    # Workflow runs every 15 minutes
-    - cron: '*/15 * * * *'
+    # Workflow runs every 45 minutes
+    - cron: '*/45 * * * *'
   workflow_dispatch:
     inputs:
       pr-number:
