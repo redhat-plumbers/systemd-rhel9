@@ -7,12 +7,22 @@ products:
   - Red Hat Enterprise Linux 9
   - CentOS Stream 9
   - rhel-9.0.0
+  - rhel-9.0.0.z
   - rhel-9.2.0
+  - rhel-9.2.0.z
   - rhel-9.3.0
+  - rhel-9.3.0.z
   - rhel-9.4.0
+  - rhel-9.4.0.z
   - rhel-9.5.0
+  - rhel-9.5.0.z
   - rhel-9.6.0
+  - rhel-9.6.0.z
   - rhel-9.7.0
+  - rhel-9.7.0.z
   - rhel-9.8.0
+  - rhel-9.8.0.z
   - rhel-9.9.0
+  - rhel-9.9.0.z
   - rhel-9.10.0
+  - rhel-9.10.0.z
