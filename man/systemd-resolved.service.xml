@@ -81,8 +81,7 @@
     is used), the per-link dynamic settings received over DHCP, information provided via
     <citerefentry><refentrytitle>resolvectl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and any
     DNS server information made available by other system services. See
-    <citerefentry><refentrytitle>resolved.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> and
-    <citerefentry><refentrytitle>systemd.network</refentrytitle><manvolnum>5</manvolnum></citerefentry> for
+    <citerefentry><refentrytitle>resolved.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> for
     details about systemd's own configuration files for DNS servers. To improve compatibility,
     <filename>/etc/resolv.conf</filename> is read in order to discover configured system DNS servers, but
     only if it is not a symlink to <filename>/run/systemd/resolve/stub-resolv.conf</filename>,
@@ -187,7 +186,6 @@
 
     <para>Routing of lookups is determined by the per-interface routing domains (search and route-only) and
     global search domains. See
-    <citerefentry><refentrytitle>systemd.network</refentrytitle><manvolnum>5</manvolnum></citerefentry> and
     <citerefentry><refentrytitle>resolvectl</refentrytitle><manvolnum>1</manvolnum></citerefentry> for a
     description how those settings are set dynamically and the discussion of <varname>Domains=</varname> in
     <citerefentry><refentrytitle>resolved.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> for a
@@ -409,7 +407,6 @@ search foobar.com barbar.com
       <citerefentry><refentrytitle>resolvectl</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
       <citerefentry project='man-pages'><refentrytitle>resolv.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
       <citerefentry project='man-pages'><refentrytitle>hosts</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>systemd.network</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>systemd-networkd.service</refentrytitle><manvolnum>8</manvolnum></citerefentry>
     </para>
   </refsect1>
