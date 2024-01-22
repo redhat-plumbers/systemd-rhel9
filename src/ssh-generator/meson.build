@@ -29,17 +29,19 @@ executable(
         install : true,
         install_dir : rootlibexecdir)
 
-custom_target(
-        '20-systemd-ssh-proxy.conf',
-        input : '20-systemd-ssh-proxy.conf.in',
-        output : '20-systemd-ssh-proxy.conf',
-        command : [jinja2_cmdline, '@INPUT@', '@OUTPUT@'],
-        install : true,
-        install_dir : rootlibexecdir / 'ssh_config.d')
+if sshconfdir != 'no'
+        custom_target(
+                '20-systemd-ssh-proxy.conf',
+                input : '20-systemd-ssh-proxy.conf.in',
+                output : '20-systemd-ssh-proxy.conf',
+                command : [jinja2_cmdline, '@INPUT@', '@OUTPUT@'],
+                install : true,
+                install_dir : rootlibexecdir / 'ssh_config.d')
 
-meson.add_install_script('sh', '-c',
-                          mkdir_p.format(sshconfdir))
+        meson.add_install_script('sh', '-c',
+                                mkdir_p.format(sshconfdir))
 
-meson.add_install_script(meson_make_symlink,
-        rootlibexecdir / 'ssh_config.d' / '20-systemd-ssh-proxy.conf',
-        sshconfdir / '20-systemd-ssh-proxy.conf')
+        meson.add_install_script(meson_make_symlink,
+                rootlibexecdir / 'ssh_config.d' / '20-systemd-ssh-proxy.conf',
+                sshconfdir / '20-systemd-ssh-proxy.conf')
+endif
