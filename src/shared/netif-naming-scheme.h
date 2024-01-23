@@ -70,6 +70,7 @@ typedef enum NamingSchemeFlags {
         NAMING_RHEL_9_1 = NAMING_RHEL_9_0,
         NAMING_RHEL_9_2 = NAMING_RHEL_9_0,
         NAMING_RHEL_9_3 = NAMING_RHEL_9_0 | NAMING_SR_IOV_R,
+        NAMING_RHEL_9_4 = NAMING_RHEL_9_3,
 
         EXTRA_NET_NAMING_SCHEMES
 

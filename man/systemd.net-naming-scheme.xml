@@ -582,6 +582,12 @@
           </listitem>
         </varlistentry>
 
+        <varlistentry>
+           <term><constant>rhel-9.4</constant></term>
+
+           <listitem><para>Same as naming scheme <constant>rhel-9.3</constant>.</para></listitem>
+        </varlistentry>
+
       </variablelist>
 
     <para>Note that <constant>latest</constant> may be used to denote the latest scheme known (to this
