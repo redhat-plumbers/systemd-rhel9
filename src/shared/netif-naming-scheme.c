@@ -38,6 +38,7 @@ static const NamingScheme naming_schemes[] = {
         { "rhel-8.7", NAMING_RHEL_8_7 },
         { "rhel-8.8", NAMING_RHEL_8_8 },
         { "rhel-8.9", NAMING_RHEL_8_9 },
+        { "rhel-8.10", NAMING_RHEL_8_10 },
         { "rhel-9.0", NAMING_RHEL_9_0 },
         { "rhel-9.1", NAMING_RHEL_9_1 },
         { "rhel-9.2", NAMING_RHEL_9_2 },
