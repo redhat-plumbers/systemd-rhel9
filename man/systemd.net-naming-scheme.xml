@@ -537,6 +537,12 @@
         </varlistentry>
 
         <varlistentry>
+          <term><constant>rhel-8.10</constant></term>
+
+          <para>Same as naming scheme <constant>rhel-8.7</constant>.</para>
+        </varlistentry>
+
+        <varlistentry>
           <term><constant>rhel-9.0</constant></term>
 
           <listitem><para>Since version <constant>v247</constant> we no longer set
