@@ -151,6 +151,8 @@ systemd-run --unit=test-mainpidsh3.service \
             -p RuntimeDirectory=mainpidsh3 \
             -p PIDFile=/run/mainpidsh3/pid \
             -p DynamicUser=1 \
+            `# Make sanitizers happy when DynamicUser=1 pulls in instrumented systemd NSS modules` \
+            -p EnvironmentFile=-/usr/lib/systemd/systemd-asan-env \
             -p TimeoutStartSec=2s \
             /dev/shm/test-mainpid3.sh \
     && { echo 'unexpected success'; exit 1; }
