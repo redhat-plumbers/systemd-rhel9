@@ -29,7 +29,7 @@ executable(
         install : true,
         install_dir : rootlibexecdir)
 
-if sshconfdir != 'no'
+if conf.get('ENABLE_SSH_PROXY_CONFIG') == 1
         custom_target(
                 '20-systemd-ssh-proxy.conf',
                 input : '20-systemd-ssh-proxy.conf.in',
