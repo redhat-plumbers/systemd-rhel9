@@ -850,7 +850,7 @@ def test_key_cert_generation(tmpdir):
         '-noout',
     ], text = True)
     assert 'Certificate' in out
-    assert re.search('Issuer: CN\s?=\s?SecureBoot signing key on host', out)
+    assert re.search(r'Issuer: CN\s?=\s?SecureBoot signing key on host', out)
 
 if __name__ == '__main__':
     sys.exit(pytest.main(sys.argv))
