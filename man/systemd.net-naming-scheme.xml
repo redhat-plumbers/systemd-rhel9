@@ -472,19 +472,19 @@
         <varlistentry>
           <term><constant>rhel-8.1</constant></term>
 
-          <para>Same as naming scheme <constant>rhel-8.0</constant>.</para>
+          <listitem><para>Same as naming scheme <constant>rhel-8.0</constant>.</para></listitem>
         </varlistentry>
 
         <varlistentry>
           <term><constant>rhel-8.2</constant></term>
 
-          <para>Same as naming scheme <constant>rhel-8.0</constant>.</para>
+          <listitem><para>Same as naming scheme <constant>rhel-8.0</constant>.</para></listitem>
         </varlistentry>
 
         <varlistentry>
           <term><constant>rhel-8.3</constant></term>
 
-          <para>Same as naming scheme <constant>rhel-8.0</constant>.</para>
+          <listitem><para>Same as naming scheme <constant>rhel-8.0</constant>.</para></listitem>
         </varlistentry>
 
         <varlistentry>
@@ -500,13 +500,13 @@
         <varlistentry>
           <term><constant>rhel-8.5</constant></term>
 
-          <para>Same as naming scheme <constant>rhel-8.4</constant>.</para>
+          <listitem><para>Same as naming scheme <constant>rhel-8.4</constant>.</para></listitem>
         </varlistentry>
 
         <varlistentry>
           <term><constant>rhel-8.6</constant></term>
 
-          <para>Same as naming scheme <constant>rhel-8.4</constant>.</para>
+          <listitem><para>Same as naming scheme <constant>rhel-8.4</constant>.</para></listitem>
         </varlistentry>
 
         <varlistentry>
@@ -527,19 +527,19 @@
         <varlistentry>
           <term><constant>rhel-8.8</constant></term>
 
-          <para>Same as naming scheme <constant>rhel-8.7</constant>.</para>
+          <listitem><para>Same as naming scheme <constant>rhel-8.7</constant>.</para></listitem>
         </varlistentry>
 
         <varlistentry>
           <term><constant>rhel-8.9</constant></term>
 
-          <para>Same as naming scheme <constant>rhel-8.7</constant>.</para>
+          <listitem><para>Same as naming scheme <constant>rhel-8.7</constant>.</para></listitem>
         </varlistentry>
 
         <varlistentry>
           <term><constant>rhel-8.10</constant></term>
 
-          <para>Same as naming scheme <constant>rhel-8.7</constant>.</para>
+          <listitem><para>Same as naming scheme <constant>rhel-8.7</constant>.</para></listitem>
         </varlistentry>
 
         <varlistentry>
