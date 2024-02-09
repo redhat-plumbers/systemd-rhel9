@@ -1,0 +1,107 @@
+name: Deploy systemd man to Pages
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - man/*
+      - .github/workflows/deploy-man-pages.yml
+  schedule:
+    # Run every Monday at 4:00 AM UTC
+    - cron: 0 4 * * 1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  # Single deploy job since we're just deploying
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          RELEASE="$(lsb_release -cs)"
+          sudo bash -c "echo 'deb-src http://archive.ubuntu.com/ubuntu/ $RELEASE main restricted universe multiverse' >>/etc/apt/sources.list"
+          sudo add-apt-repository -y ppa:upstream-systemd-ci/systemd-ci
+          sudo apt-get -y update
+          sudo apt-get -y build-dep systemd
+          sudo apt-get install -y \
+            cryptsetup-bin        \
+            expect                \
+            fdisk                 \
+            gettext               \
+            iputils-ping          \
+            isc-dhcp-client       \
+            itstool               \
+            kbd                   \
+            libblkid-dev          \
+            libbpf-dev            \
+            libc6-dev-i386        \
+            libcap-dev            \
+            libcurl4-gnutls-dev   \
+            libfdisk-dev          \
+            libfido2-dev          \
+            libgpg-error-dev      \
+            liblz4-dev            \
+            liblzma-dev           \
+            libmicrohttpd-dev     \
+            libmount-dev          \
+            libp11-kit-dev        \
+            libpwquality-dev      \
+            libqrencode-dev       \
+            libssl-dev            \
+            libtss2-dev           \
+            libxkbcommon-dev      \
+            libxtables-dev        \
+            libzstd-dev           \
+            meson                 \
+            mold                  \
+            mount                 \
+            net-tools             \
+            ninja-build           \
+            perl                  \
+            python3-evdev         \
+            python3-jinja2        \
+            python3-lxml          \
+            python3-pip           \
+            python3-pyparsing     \
+            python3-setuptools    \
+            quota                 \
+            strace                \
+            unifont               \
+            util-linux            \
+            zstd                  \
+
+      - name: Build HTML man pages
+        run: |
+          meson build
+          ninja -C build man/html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./build/man
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
