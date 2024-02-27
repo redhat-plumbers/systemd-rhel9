@@ -306,7 +306,7 @@ TEST(sequence_numbers) {
 
 static int intro(void) {
         /* managed_journal_file_open requires a valid machine id */
-        if (access("/etc/machine-id", F_OK) != 0)
+        if (sd_id128_get_machine(NULL) < 0)
                 return log_tests_skipped("/etc/machine-id not found");
 
         arg_keep = saved_argc > 1;
