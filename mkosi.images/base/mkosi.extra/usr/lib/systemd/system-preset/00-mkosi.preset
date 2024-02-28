@@ -9,15 +9,8 @@ disable dnsmasq.service
 disable isc-dhcp-server.service
 disable isc-dhcp-server6.service
 
-# Pulled in via dracut-network by kexec-tools on Fedora.
-disable NetworkManager*
-
 # Make sure dbus-broker is started by default on Debian/Ubuntu.
 enable dbus-broker.service
-
-# systemd-networkd is disabled by default on Fedora so make sure it is enabled.
-enable systemd-networkd.service
-enable systemd-networkd-wait-online.service
 
 # We install dnf in some images but it's only going to be used rarely,
 # so let's not have dnf create its cache.
@@ -26,5 +19,7 @@ disable dnf-makecache.*
 # We have journald to receive audit data so let's make sure we're not running auditd as well
 disable auditd.service
 
-# systemd-timesyncd is not enabled by default in the default systemd preset so enable it here instead.
-enable systemd-timesyncd.service
+# We don't ship sd-networkd on RHEL 9, so replace it with NM
+disable systemd-networkd.service
+disable systemd-networkd-wait-online.service
+enable NetworkManager*
