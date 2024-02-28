@@ -106,6 +106,14 @@ if [ ! -f "$BUILDDIR"/build.ninja ]; then
         -D xenctrl="$([[ "$ID" =~ debian|ubuntu|fedora|opensuse ]] && echo true || echo false)"
         -D libiptc="$([[ "$ID" =~ debian|ubuntu ]] && echo true || echo false)"
         -D libcryptsetup-plugins="$([[ "$ID" = "centos" ]] && [[ "$VERSION" = "8" ]] && echo false || echo true)"
+        # Necessary on RHEL 9 to build sd-boot stuff
+        -D gnu-efi=true
+        # Disable stuff we don't build on RHEL
+        -D timesyncd=false
+        -D homed=false
+        -D userdb=false
+        -D portabled=false
+        -D networkd=false
     )
 
     # On debian-like systems the library directory is not /usr/lib64 but /usr/lib/<arch-triplet>/.
