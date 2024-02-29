@@ -485,6 +485,7 @@ foreach tuple : [['systemd-boot@0@.@1@', systemd_boot_objects, false, 'systemd-b
                            '-j', '.sdata',
                            '-j', '.sdmagic',
                            '-j', '.text',
+                           '--file-alignment=512',
                            '--section-alignment=512',
                            efi_format,
                            '@INPUT@', '@OUTPUT@'],
