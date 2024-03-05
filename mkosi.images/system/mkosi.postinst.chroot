@@ -101,11 +101,18 @@ cat >/usr/lib/tmpfiles.d/testuser.conf <<EOF
 q	/home/testuser	0700	4711	4711
 EOF
 
-# sbsign is not available on CentOS Stream
-if command -v sbsign &>/dev/null; then
+# RHEL 9 only: we don't ship sbsigntools in RHEL 9 so we have to use pesign
+# instead. Unfortunately, ATTOW ukify doesn't support signing with pesign, so we
+# have to do it manually :(
+if command -v pesign &>/dev/null; then
     # Ensure that side-loaded PE addons are loaded if signed, and ignored if not
     addons_dir=/efi/loader/addons
     mkdir -p "$addons_dir"
-    ukify build --secureboot-private-key mkosi.key --secureboot-certificate mkosi.crt --cmdline this_should_be_here -o "$addons_dir/good.addon.efi"
+    ukify build --cmdline this_should_be_here -o "good.addon.efi"
     ukify build --cmdline this_should_not_be_here -o "$addons_dir/bad.addon.efi"
+
+    openssl pkcs12 -name "mkosi" -passin "pass:" -passout "pass:" -export -out mkosi.p12 -inkey mkosi.key -in mkosi.crt
+    pk12util -W "" -i mkosi.p12 -d /etc/pki/pesign
+    pesign -v -s -c "mkosi" -i "good.addon.efi" -o "$addons_dir/good.addon.efi"
+    pesign -S -i"$addons_dir/good.addon.efi"
 fi
