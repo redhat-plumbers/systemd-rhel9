@@ -3,9 +3,6 @@
 
 rm -f /testok
 
-# TODO: Figure out why this is failing
-systemctl reset-failed systemd-vconsole-setup.service
-
 systemctl --failed --no-legend | tee /failed-services
 
 # Check that secure boot keys were properly enrolled.
