@@ -76,7 +76,7 @@ for phase in "${PHASES[@]}"; do
             MESON_ARGS+=(--fatal-meson-warnings)
             run_meson -Dnobody-group=nogroup --werror -Dtests=unsafe -Dslow-tests=true -Dfuzz-tests=true "${MESON_ARGS[@]}" build
             ninja -C build -v
-            meson test -C build --print-errorlogs
+            meson test -C build -v test-execute
             ;;
         RUN_ASAN_UBSAN|RUN_GCC_ASAN_UBSAN|RUN_CLANG_ASAN_UBSAN|RUN_CLANG_ASAN_UBSAN_NO_DEPS)
             MESON_ARGS=(--optimization=1)
