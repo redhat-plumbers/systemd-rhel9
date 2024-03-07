@@ -110,8 +110,9 @@ static int make_sshd_template_unit(
                         "Documentation=man:systemd-ssh-generator(8) man:sshd(8)\n"
                         "\n"
                         "[Service]\n"
-                        "ExecStart=-%s -i\n"
-                        "StandardInput=socket\n",
+                        "ExecStart=-%s -i -o \"AuthorizedKeysFile ${CREDENTIALS_DIRECTORY}/ssh.ephemeral-authorized_keys-all .ssh/authorized_keys\"\n"
+                        "StandardInput=socket\n"
+                        "ImportCredential=ssh.ephemeral-authorized_keys-all",
                         sshd_binary);
 
                 r = fflush_and_check(f);
