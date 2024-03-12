@@ -780,6 +780,9 @@ typedef struct UnitVTable {
 
         /* True if systemd-oomd can monitor and act on this unit's recursive children's cgroups  */
         bool can_set_managed_oom;
+
+        /* If true, we'll notify a surrounding VMM/container manager about this unit becoming available */
+        bool notify_supervisor;
 } UnitVTable;
 
 extern const UnitVTable * const unit_vtable[_UNIT_TYPE_MAX];
