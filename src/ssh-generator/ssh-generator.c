@@ -129,7 +129,8 @@ static int write_socket_unit(
                 const char *dest,
                 const char *unit,
                 const char *listen_stream,
-                const char *comment) {
+                const char *comment,
+                bool with_ssh_access_target_dependency) {
 
         int r;
 
@@ -150,11 +151,19 @@ static int write_socket_unit(
         fprintf(f,
                 "[Unit]\n"
                 "Description=OpenSSH Server Socket (systemd-ssh-generator, %s)\n"
-                "Documentation=man:systemd-ssh-generator(8)\n"
+                "Documentation=man:systemd-ssh-generator(8)\n",
+                comment);
+
+        /* When this is a remotely accessible socket let's mark this with a milestone: ssh-access.target */
+        if (with_ssh_access_target_dependency)
+                fputs("Wants=ssh-access.target\n"
+                      "Before=ssh-access.target\n",
+                      f);
+
+        fprintf(f,
                 "\n[Socket]\n"
                 "ListenStream=%s\n"
                 "Accept=yes\n",
-                comment,
                 listen_stream);
 
         r = fflush_and_check(f);
@@ -229,7 +238,8 @@ static int add_vsock_socket(
                         dest,
                         "sshd-vsock.socket",
                         "vsock::22",
-                        "AF_VSOCK");
+                        "AF_VSOCK",
+                        /* with_ssh_access_target_dependency= */ true);
         if (r < 0)
                 return r;
 
@@ -263,7 +273,8 @@ static int add_local_unix_socket(
                         dest,
                         "sshd-unix-local.socket",
                         "/run/ssh-unix-local/socket",
-                        "AF_UNIX Local");
+                        "AF_UNIX Local",
+                        /* with_ssh_access_target_dependency= */ false);
         if (r < 0)
                 return r;
 
@@ -318,7 +329,8 @@ static int add_export_unix_socket(
                         dest,
                         "sshd-unix-export.socket",
                         "/run/host/unix-export/ssh",
-                        "AF_UNIX Export");
+                        "AF_UNIX Export",
+                        /* with_ssh_access_target_dependency= */ true);
         if (r < 0)
                 return r;
 
@@ -368,7 +380,8 @@ static int add_extra_sockets(
                                 dest,
                                 socket ?: "sshd-extra.socket",
                                 *i,
-                                *i);
+                                *i,
+                                /* with_ssh_access_target_dependency= */ true);
                 if (r < 0)
                         return r;
 
