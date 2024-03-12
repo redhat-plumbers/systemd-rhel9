@@ -83,6 +83,7 @@ units = [
         ['smartcard.target',                    ''],
         ['sockets.target',                      ''],
         ['sound.target',                        ''],
+        ['ssh-access.target',                   ''],
         ['suspend.target',                      ''],
         ['swap.target',                         ''],
         ['sys-fs-fuse-connections.mount',       '',
