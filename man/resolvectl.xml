@@ -181,10 +181,6 @@
 
           <para>Commands <command>dns</command>, <command>domain</command> and <command>nta</command> can take
           a single empty string argument to clear their respective value lists.</para>
-
-          <para>For details about these settings, their possible values and their effect, see the
-          corresponding settings in
-          <citerefentry><refentrytitle>systemd.network</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
         </listitem>
       </varlistentry>
 
