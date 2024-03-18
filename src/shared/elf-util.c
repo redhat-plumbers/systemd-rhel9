@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include "alloc-util.h"
+#include "capability-util.h"
 #include "dlfcn-util.h"
 #include "elf-util.h"
 #include "errno-util.h"
@@ -21,9 +22,12 @@
 #include "hexdecoct.h"
 #include "io-util.h"
 #include "macro.h"
+#include "namespace-util.h"
 #include "process-util.h"
 #include "rlimit-util.h"
 #include "string-util.h"
+#include "uid-alloc-range.h"
+#include "user-util.h"
 #include "util.h"
 
 #define FRAMES_MAX 64
@@ -752,11 +756,27 @@ static int parse_elf(int fd, const char *executable, char **ret, JsonVariant **r
         return 0;
 }
 
-int parse_elf_object(int fd, const char *executable, bool fork_disable_dump, char **ret, JsonVariant **ret_package_metadata) {
+static int core_change_uid_gid(uid_t uid, gid_t gid) {
+        uid_t u = uid;
+        gid_t g = gid;
+        int r;
+
+        if (uid_is_system(u)) {
+                const char *user = "systemd-coredump";
+
+                r = get_user_creds(&user, &u, &g, NULL, NULL, 0);
+                if (r < 0)
+                        log_warning_errno(r, "Cannot resolve %s user, ignoring: %m", user);
+        }
+
+        return drop_privileges(u, g, 0);
+}
+
+int parse_elf_object(int fd, int mntns_fd, uid_t uid, gid_t gid, const char *executable, bool fork_disable_dump, char **ret, JsonVariant **ret_package_metadata) {
         _cleanup_close_pair_ int error_pipe[2] = { -1, -1 }, return_pipe[2] = { -1, -1 }, json_pipe[2] = { -1, -1 };
         _cleanup_(json_variant_unrefp) JsonVariant *package_metadata = NULL;
         _cleanup_free_ char *buf = NULL;
-        int r;
+        int flags, r;
 
         assert(fd >= 0);
 
@@ -784,6 +804,10 @@ int parse_elf_object(int fd, const char *executable, bool fork_disable_dump, cha
                         return r;
         }
 
+        flags = FORK_RESET_SIGNALS|FORK_CLOSE_ALL_FDS|FORK_NEW_MOUNTNS|FORK_MOUNTNS_SLAVE|FORK_NEW_USERNS|FORK_WAIT|FORK_REOPEN_LOG;
+        if (mntns_fd >= 0)
+                flags &= ~(FORK_CLOSE_ALL_FDS|FORK_NEW_MOUNTNS|FORK_MOUNTNS_SLAVE|FORK_NEW_USERNS);
+
         /* Parsing possibly malformed data is crash-happy, so fork. In case we crash,
          * the core file will not be lost, and the messages will still be attached to
          * the journal. Reading the elf object might be slow, but it still has an upper
@@ -793,7 +817,7 @@ int parse_elf_object(int fd, const char *executable, bool fork_disable_dump, cha
         r = safe_fork_full("(sd-parse-elf)",
                            (int[]){ fd, error_pipe[1], return_pipe[1], json_pipe[1] },
                            4,
-                           FORK_RESET_SIGNALS|FORK_CLOSE_ALL_FDS|FORK_NEW_MOUNTNS|FORK_MOUNTNS_SLAVE|FORK_NEW_USERNS|FORK_WAIT|FORK_REOPEN_LOG,
+                           flags,
                            NULL);
         if (r < 0) {
                 if (r == -EPROTO) { /* We should have the errno from the child, but don't clobber original error */
@@ -811,6 +835,22 @@ int parse_elf_object(int fd, const char *executable, bool fork_disable_dump, cha
                 return r;
         }
         if (r == 0) {
+                if (mntns_fd >= 0) {
+                        r = namespace_enter(/* pidns_fd = */ -EBADF,
+                                            mntns_fd,
+                                            /* netns_fd = */ -EBADF,
+                                            /* userns_fd = */ -EBADF,
+                                            /* root_fd = */ -EBADF);
+                        if (r < 0)
+                                log_notice_errno(r, "Failed to enter mount namespace of crashing process, ignoring: %m");
+                }
+
+                if (uid != UID_NOBODY && gid != GID_NOBODY) {
+                        r = core_change_uid_gid(uid, gid);
+                        if (r < 0)
+                                log_notice_errno(r, "Failed to drop privileges, ignoring: %m");
+                }
+
                 /* We want to avoid loops, given this can be called from systemd-coredump */
                 if (fork_disable_dump) {
                         r = RET_NERRNO(prctl(PR_SET_DUMPABLE, 0));
