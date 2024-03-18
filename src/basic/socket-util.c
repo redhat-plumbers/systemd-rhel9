@@ -41,6 +41,11 @@
 #  define IDN_FLAGS 0
 #endif
 
+/* From the kernel's include/net/scm.h */
+#ifndef SCM_MAX_FD
+#  define SCM_MAX_FD 253
+#endif
+
 static const char* const socket_address_type_table[] = {
         [SOCK_STREAM] =    "Stream",
         [SOCK_DGRAM] =     "Datagram",
@@ -949,6 +954,53 @@ int getpeergroups(int fd, gid_t **ret) {
         *ret = TAKE_PTR(d);
 
         return (int) n;
+}
+
+ssize_t send_many_fds_iov_sa(
+                int transport_fd,
+                int *fds_array, size_t n_fds_array,
+                const struct iovec *iov, size_t iovlen,
+                const struct sockaddr *sa, socklen_t len,
+                int flags) {
+
+        _cleanup_free_ struct cmsghdr *cmsg = NULL;
+        struct msghdr mh = {
+                .msg_name = (struct sockaddr*) sa,
+                .msg_namelen = len,
+                .msg_iov = (struct iovec *)iov,
+                .msg_iovlen = iovlen,
+        };
+        ssize_t k;
+
+        assert(transport_fd >= 0);
+        assert(fds_array || n_fds_array == 0);
+
+        /* The kernel will reject sending more than SCM_MAX_FD FDs at once */
+        if (n_fds_array > SCM_MAX_FD)
+                return -E2BIG;
+
+        /* We need either an FD array or data to send. If there's nothing, return an error. */
+        if (n_fds_array == 0 && !iov)
+                return -EINVAL;
+
+        if (n_fds_array > 0) {
+                mh.msg_controllen = CMSG_SPACE(sizeof(int) * n_fds_array);
+                mh.msg_control = cmsg = malloc(mh.msg_controllen);
+                if (!cmsg)
+                        return -ENOMEM;
+
+                *cmsg = (struct cmsghdr) {
+                        .cmsg_len = CMSG_LEN(sizeof(int) * n_fds_array),
+                        .cmsg_level = SOL_SOCKET,
+                        .cmsg_type = SCM_RIGHTS,
+                };
+                memcpy(CMSG_DATA(cmsg), fds_array, sizeof(int) * n_fds_array);
+        }
+        k = sendmsg(transport_fd, &mh, MSG_NOSIGNAL | flags);
+        if (k < 0)
+                return (ssize_t) -errno;
+
+        return k;
 }
 
 ssize_t send_one_fd_iov_sa(

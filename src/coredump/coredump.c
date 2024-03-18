@@ -24,6 +24,7 @@
 #include "coredump-vacuum.h"
 #include "dirent-util.h"
 #include "elf-util.h"
+#include "env-util.h"
 #include "escape.h"
 #include "fd-util.h"
 #include "fileio.h"
@@ -36,6 +37,7 @@
 #include "main-func.h"
 #include "memory-util.h"
 #include "mkdir-label.h"
+#include "namespace-util.h"
 #include "parse-util.h"
 #include "process-util.h"
 #include "signal-util.h"
@@ -129,6 +131,8 @@ typedef struct Context {
         const char *meta[_META_MAX];
         size_t meta_size[_META_MAX];
         pid_t pid;
+        uid_t uid;
+        gid_t gid;
         bool is_pid1;
         bool is_journald;
 } Context;
@@ -895,36 +899,11 @@ static int get_process_container_parent_cmdline(pid_t pid, char** cmdline) {
         return 1;
 }
 
-static int change_uid_gid(const Context *context) {
-        uid_t uid;
-        gid_t gid;
-        int r;
-
-        r = parse_uid(context->meta[META_ARGV_UID], &uid);
-        if (r < 0)
-                return r;
-
-        if (uid_is_system(uid)) {
-                const char *user = "systemd-coredump";
-
-                r = get_user_creds(&user, &uid, &gid, NULL, NULL, 0);
-                if (r < 0) {
-                        log_warning_errno(r, "Cannot resolve %s user. Proceeding to dump core as root: %m", user);
-                        uid = gid = 0;
-                }
-        } else {
-                r = parse_gid(context->meta[META_ARGV_GID], &gid);
-                if (r < 0)
-                        return r;
-        }
-
-        return drop_privileges(uid, gid, 0);
-}
-
 static int submit_coredump(
                 const Context *context,
                 struct iovec_wrapper *iovw,
-                int input_fd) {
+                int input_fd,
+                int mntns_fd) {
 
         _cleanup_(json_variant_unrefp) JsonVariant *json_metadata = NULL;
         _cleanup_close_ int coredump_fd = -1, coredump_node_fd = -1;
@@ -967,15 +946,6 @@ static int submit_coredump(
         /* Vacuum again, but exclude the coredump we just created */
         (void) coredump_vacuum(coredump_node_fd >= 0 ? coredump_node_fd : coredump_fd, arg_keep_free, arg_max_use);
 
-        /* Now, let's drop privileges to become the user who owns the segfaulted process
-         * and allocate the coredump memory under the user's uid. This also ensures that
-         * the credentials journald will see are the ones of the coredumping user, thus
-         * making sure the user gets access to the core dump. Let's also get rid of all
-         * capabilities, if we run as root, we won't need them anymore. */
-        r = change_uid_gid(context);
-        if (r < 0)
-                return log_error_errno(r, "Failed to drop privileges: %m");
-
         /* Try to get a stack trace if we can */
         if (coredump_size > arg_process_size_max)
                 log_debug("Not generating stack trace: core size %"PRIu64" is greater "
@@ -985,11 +955,22 @@ static int submit_coredump(
                 bool skip = startswith(context->meta[META_COMM], "systemd-coredum"); /* COMM is 16 bytes usually */
 
                 (void) parse_elf_object(coredump_fd,
+                                        mntns_fd,
+                                        context->uid,
+                                        context->gid,
                                         context->meta[META_EXE],
                                         /* fork_disable_dump= */ skip, /* avoid loops */
                                         &stacktrace,
                                         &json_metadata);
         }
+
+        /* Now, let's drop privileges to become the user who owns the segfaulted process. This also ensures
+         * that the credentials journald will see are the ones of the coredumping user, thus making sure
+         * the user gets access to the core dump. Let's also get rid of all capabilities, if we run as root,
+         * we won't need them anymore. */
+        r = drop_privileges(context->uid, context->gid, 0);
+        if (r < 0)
+                return log_error_errno(r, "Failed to drop privileges: %m");
 
 log:
         core_message = strjoina("Process ", context->meta[META_ARGV_PID],
@@ -1123,6 +1104,15 @@ static int save_context(Context *context, const struct iovec_wrapper *iovw) {
         if (r < 0)
                 return log_error_errno(r, "Failed to parse PID \"%s\": %m", context->meta[META_ARGV_PID]);
 
+        r = parse_uid(context->meta[META_ARGV_UID], &context->uid);
+        if (r < 0)
+                return log_error_errno(r, "Failed to parse UID \"%s\": %m", context->meta[META_ARGV_UID]);
+
+        r = parse_gid(context->meta[META_ARGV_GID], &context->gid);
+        if (r < 0)
+                return log_error_errno(r, "Failed to parse GID \"%s\": %m", context->meta[META_ARGV_GID]);
+
+
         unit = context->meta[META_UNIT];
         context->is_pid1 = streq(context->meta[META_ARGV_PID], "1") || streq_ptr(unit, SPECIAL_INIT_SCOPE);
         context->is_journald = streq_ptr(unit, SPECIAL_JOURNALD_SERVICE);
@@ -1131,11 +1121,11 @@ static int save_context(Context *context, const struct iovec_wrapper *iovw) {
 }
 
 static int process_socket(int fd) {
-        _cleanup_close_ int input_fd = -1;
+        _cleanup_close_ int input_fd = -EBADF, mntns_fd = -EBADF;
         Context context = {};
         struct iovec_wrapper iovw = {};
         struct iovec iovec;
-        int r;
+        int iterations = 0, r;
 
         assert(fd >= 0);
 
@@ -1175,23 +1165,39 @@ static int process_socket(int fd) {
                         goto finish;
                 }
 
-                /* The final zero-length datagram carries the file descriptor and tells us
+                /* The final zero-length datagram carries the file descriptors and tells us
                  * that we're done. */
                 if (n == 0) {
                         struct cmsghdr *found;
 
                         free(iovec.iov_base);
 
-                        found = cmsg_find(&mh, SOL_SOCKET, SCM_RIGHTS, CMSG_LEN(sizeof(int)));
-                        if (!found) {
-                                cmsg_close_all(&mh);
-                                r = log_error_errno(SYNTHETIC_ERRNO(EBADMSG),
-                                                    "Coredump file descriptor missing.");
-                                goto finish;
+                        found = cmsg_find(&mh, SOL_SOCKET, SCM_RIGHTS, CMSG_LEN(sizeof(int) * 2));
+                        if (found) {
+                                int fds[2] = { -EBADF, -EBADF };
+
+                                memcpy(fds, CMSG_DATA(found), sizeof(int) * 2);
+
+                                assert(mntns_fd < 0);
+
+                                /* Maybe we already got coredump FD in previous iteration? */
+                                safe_close(input_fd);
+
+                                input_fd = fds[0];
+                                mntns_fd = fds[1];
+
+                                /* We have all FDs we need let's take a shortcut here. */
+                                break;
+                        } else {
+                                found = cmsg_find(&mh, SOL_SOCKET, SCM_RIGHTS, CMSG_LEN(sizeof(int)));
+                                if (found)
+                                        input_fd = *CMSG_DATA(found);
                         }
 
-                        assert(input_fd < 0);
-                        input_fd = *(int*) CMSG_DATA(found);
+                        /* This is the first message that carries file descriptors, maybe there will be one more that actually contains array of descriptors. */
+                        if (iterations++ == 0)
+                                continue;
+
                         break;
                 } else
                         cmsg_close_all(&mh);
@@ -1206,7 +1212,11 @@ static int process_socket(int fd) {
         }
 
         /* Make sure we got all data we really need */
-        assert(input_fd >= 0);
+        if (input_fd < 0) {
+                r = log_error_errno(SYNTHETIC_ERRNO(EBADMSG),
+                                    "Coredump file descriptor missing.");
+                goto finish;
+        }
 
         r = save_context(&context, &iovw);
         if (r < 0)
@@ -1221,15 +1231,15 @@ static int process_socket(int fd) {
                         goto finish;
                 }
 
-        r = submit_coredump(&context, &iovw, input_fd);
+        r = submit_coredump(&context, &iovw, input_fd, mntns_fd);
 
 finish:
         iovw_free_contents(&iovw, true);
         return r;
 }
 
-static int send_iovec(const struct iovec_wrapper *iovw, int input_fd) {
-        _cleanup_close_ int fd = -1;
+static int send_iovec(const struct iovec_wrapper *iovw, int input_fd, int mntns_fd) {
+        _cleanup_close_ int fd = -EBADF;
         int r;
 
         assert(iovw);
@@ -1284,6 +1294,12 @@ static int send_iovec(const struct iovec_wrapper *iovw, int input_fd) {
         r = send_one_fd(fd, input_fd, 0);
         if (r < 0)
                 return log_error_errno(r, "Failed to send coredump fd: %m");
+
+        if (mntns_fd >= 0) {
+                r = send_many_fds(fd, (int[]) { input_fd, mntns_fd }, 2, 0);
+                if (r < 0)
+                        return log_error_errno(r, "Failed to send coredump fds: %m");
+        }
 
         return 0;
 }
@@ -1457,7 +1473,7 @@ static int gather_pid_metadata(struct iovec_wrapper *iovw, Context *context) {
 static int process_kernel(int argc, char* argv[]) {
         Context context = {};
         struct iovec_wrapper *iovw;
-        int r;
+        int r, mntns_fd = -EBADF;
 
         /* When we're invoked by the kernel, stdout/stderr are closed which is dangerous because the fds
          * could get reallocated. To avoid hard to debug issues, let's instead bind stdout/stderr to
@@ -1491,6 +1507,25 @@ static int process_kernel(int argc, char* argv[]) {
                 log_open();
         }
 
+        r = in_same_namespace(getpid_cached(), context.pid, NAMESPACE_PID);
+        if (r < 0)
+                log_debug_errno(r, "Failed to check pidns of crashing process, ignoring: %m");
+
+        if (r == 0 && getenv_bool("SYSTEMD_COREDUMP_ALLOW_NAMESPACE_CHANGE") > 0) {
+                r = namespace_open(context.pid,  NULL, &mntns_fd, NULL, NULL, NULL);
+                if (r < 0)
+                        return log_error_errno(r, "Failed to open mntns of crashing process: %m");
+        } else {
+                /* Crashing process is not running in the container or changing namespace is disabled, but we
+                   still need to send mount namespace fd along side coredump fd so let's just open our own
+                   mount namespace. Entering it will be NOP but that is OK. */
+                r = namespace_open(getpid_cached(),  NULL, &mntns_fd, NULL, NULL, NULL);
+                if (r < 0)
+                        return log_error_errno(r, "Failed to open our mntns: %m");
+        }
+
+        assert(mntns_fd >= 0 && fd_is_ns(mntns_fd, CLONE_NEWNS) > 0);
+
         /* If this is PID 1 disable coredump collection, we'll unlikely be able to process
          * it later on.
          *
@@ -1503,9 +1538,9 @@ static int process_kernel(int argc, char* argv[]) {
         }
 
         if (context.is_journald || context.is_pid1)
-                r = submit_coredump(&context, iovw, STDIN_FILENO);
+                r = submit_coredump(&context, iovw, STDIN_FILENO, mntns_fd);
         else
-                r = send_iovec(iovw, STDIN_FILENO);
+                r = send_iovec(iovw, STDIN_FILENO, mntns_fd);
 
  finish:
         iovw = iovw_free_free(iovw);
