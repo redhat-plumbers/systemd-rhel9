@@ -494,4 +494,9 @@ foreach tuple : [['systemd-boot@0@.@1@', systemd_boot_objects, false, 'systemd-b
                 install_dir : bootlibdir)
 
         alias_target(tuple[3], efi)
+
+        test('check-alignment-@0@'.format(tuple[0].format(efi_arch[0], 'efi')),
+             check_efi_alignment_py,
+             args : efi.full_path(),
+             suite : 'efi')
 endforeach
