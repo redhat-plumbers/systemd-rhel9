@@ -33,7 +33,7 @@ SecureBootMode secure_boot_mode(void) {
 }
 
 #ifdef SBAT_DISTRO
-static const char sbat[] _used_ _section_(".sbat") = SBAT_SECTION_TEXT;
+static const char sbat[512] _used_ _section_(".sbat") = SBAT_SECTION_TEXT;
 #endif
 
 EFI_STATUS secure_boot_enroll_at(EFI_FILE *root_dir, const char16_t *path) {

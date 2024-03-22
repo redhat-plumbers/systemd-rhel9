@@ -4,7 +4,7 @@
 #include "macro-fundamental.h"
 
 /* Magic string for recognizing our own binaries */
-_used_ _section_(".sdmagic") static const char magic[] =
+_used_ _section_(".sdmagic") static const char magic[512] =
         "#### LoaderInfo: systemd-addon " GIT_VERSION " ####";
 
 /* This is intended to carry data, not to be executed */
