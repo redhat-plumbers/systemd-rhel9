@@ -9,6 +9,7 @@
 #include "fd-util.h"
 #include "format-util.h"
 #include "log.h"
+#include "mountpoint-util.h"
 #include "string-util.h"
 #include "strv.h"
 #include "tests.h"
@@ -295,6 +296,9 @@ TEST(monitor) {
 }
 
 static int intro(void) {
+        if (IN_SET(cg_unified(), -ENOENT, -ENOMEDIUM))
+                return log_tests_skipped("cgroupfs is not mounted");
+
         log_info("/* Information printed is from the live system */");
         return EXIT_SUCCESS;
 }

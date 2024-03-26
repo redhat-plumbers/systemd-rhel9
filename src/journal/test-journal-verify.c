@@ -143,6 +143,10 @@ static int run_test(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
+        /* managed_journal_file_open requires a valid machine id */
+        if (sd_id128_get_machine(NULL) < 0)
+                return log_tests_skipped("/etc/machine-id not found");
+
         assert_se(setenv("SYSTEMD_JOURNAL_COMPACT", "0", 1) >= 0);
         run_test(argc, argv);
 

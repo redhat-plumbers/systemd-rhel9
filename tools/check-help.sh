@@ -9,6 +9,7 @@ set -o pipefail
 
 BINARY="${1:?}"
 export SYSTEMD_LOG_LEVEL=info
+export KERNEL_INSTALL_BYPASS="no"
 
 if [[ ! -x "$BINARY" ]]; then
     echo "$BINARY is not an executable"

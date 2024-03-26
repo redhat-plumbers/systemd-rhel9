@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+# mkosi adds its own ssh units via the --ssh switch so disable the default ones.
+disable ssh.service
+disable sshd.service
+
+# These are started manually in integration tests so don't start them by default.
+disable dnsmasq.service
+disable isc-dhcp-server.service
+disable isc-dhcp-server6.service
+
+# Make sure dbus-broker is started by default on Debian/Ubuntu.
+enable dbus-broker.service
+
+# We install dnf in some images but it's only going to be used rarely,
+# so let's not have dnf create its cache.
+disable dnf-makecache.*
+
+# We have journald to receive audit data so let's make sure we're not running auditd as well
+disable auditd.service
+
+# We don't ship sd-networkd on RHEL 9, so replace it with NM
+disable systemd-networkd.service
+disable systemd-networkd-wait-online.service
+enable NetworkManager*

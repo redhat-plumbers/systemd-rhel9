@@ -292,7 +292,7 @@ TEST(chase_symlinks) {
         assert_se(symlink("/usr/../etc/./machine-id", p) >= 0);
 
         r = chase_symlinks(p, NULL, 0, NULL, &pfd);
-        if (r != -ENOENT) {
+        if (r != -ENOENT && sd_id128_get_machine(NULL) >= 0) {
                 _cleanup_close_ int fd = -1;
                 sd_id128_t a, b;
 
@@ -302,7 +302,7 @@ TEST(chase_symlinks) {
                 assert_se(fd >= 0);
                 safe_close(pfd);
 
-                assert_se(id128_read_fd(fd, ID128_PLAIN, &a) >= 0);
+                assert_se(id128_read_fd(fd, ID128_FORMAT_PLAIN, &a) >= 0);
                 assert_se(sd_id128_get_machine(&b) >= 0);
                 assert_se(sd_id128_equal(a, b));
         }

@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "sd-id128.h"
 #include "sd-journal.h"
 
 #include "alloc-util.h"
@@ -263,22 +264,26 @@ static void test_sequence_numbers_one(void) {
 
         test_close(one);
 
-        /* restart server */
-        seqnum = 0;
+        /* If the machine-id is not initialized, the header file verification
+         * (which happens when re-opening a journal file) will fail. */
+        if (sd_id128_get_machine(NULL) >= 0) {
+                /* restart server */
+                seqnum = 0;
 
-        assert_se(managed_journal_file_open(-1, "two.journal", O_RDWR, JOURNAL_COMPRESS, 0,
-                                            UINT64_MAX, NULL, m, NULL, NULL, &two) == 0);
+                assert_se(managed_journal_file_open(-1, "two.journal", O_RDWR, JOURNAL_COMPRESS, 0,
+                                                    UINT64_MAX, NULL, m, NULL, NULL, &two) == 0);
 
-        assert_se(sd_id128_equal(two->file->header->seqnum_id, seqnum_id));
+                assert_se(sd_id128_equal(two->file->header->seqnum_id, seqnum_id));
 
-        append_number(two, 7, &seqnum);
-        printf("seqnum=%"PRIu64"\n", seqnum);
-        assert_se(seqnum == 5);
+                append_number(two, 7, &seqnum);
+                printf("seqnum=%"PRIu64"\n", seqnum);
+                assert_se(seqnum == 5);
 
-        /* So..., here we have the same seqnum in two files with the
-         * same seqnum_id. */
+                /* So..., here we have the same seqnum in two files with the
+                 * same seqnum_id. */
 
-        test_close(two);
+                test_close(two);
+        }
 
         log_info("Done...");
 
@@ -301,7 +306,7 @@ TEST(sequence_numbers) {
 
 static int intro(void) {
         /* managed_journal_file_open requires a valid machine id */
-        if (access("/etc/machine-id", F_OK) != 0)
+        if (sd_id128_get_machine(NULL) < 0)
                 return log_tests_skipped("/etc/machine-id not found");
 
         arg_keep = saved_argc > 1;

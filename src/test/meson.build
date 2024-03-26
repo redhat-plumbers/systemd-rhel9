@@ -699,11 +699,11 @@ tests += [
           libsystemd_static]],
 
         [files('../libsystemd/sd-device/test-sd-device-thread.c'),
-         [libsystemd],
+         [libbasic, libshared_static, libsystemd_static],
          [threads]],
 
         [files('../libudev/test-udev-device-thread.c'),
-         [libudev],
+         [libbasic, libshared_static, libsystemd_static, libudev],
          [threads]],
 ]
 
