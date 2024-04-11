@@ -12,17 +12,17 @@ products:
   - rhel-9.2.0.z
   - rhel-9.3.0
   - rhel-9.3.0.z
-  - rhel-9.4.0
-  - rhel-9.4.0.z
-  - rhel-9.5.0
-  - rhel-9.5.0.z
-  - rhel-9.6.0
-  - rhel-9.6.0.z
-  - rhel-9.7.0
-  - rhel-9.7.0.z
-  - rhel-9.8.0
-  - rhel-9.8.0.z
-  - rhel-9.9.0
-  - rhel-9.9.0.z
-  - rhel-9.10.0
-  - rhel-9.10.0.z
+  - rhel-9.4
+  - rhel-9.4.z
+  - rhel-9.5
+  - rhel-9.5.z
+  - rhel-9.6
+  - rhel-9.6.z
+  - rhel-9.7
+  - rhel-9.7.z
+  - rhel-9.8
+  - rhel-9.8.z
+  - rhel-9.9
+  - rhel-9.9.z
+  - rhel-9.10
+  - rhel-9.10.z
