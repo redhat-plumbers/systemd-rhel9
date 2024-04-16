@@ -41,6 +41,7 @@ extern const unsigned char* (*sym_fido_cred_id_ptr)(const fido_cred_t *);
 extern fido_cred_t* (*sym_fido_cred_new)(void);
 extern int (*sym_fido_cred_set_clientdata_hash)(fido_cred_t *, const unsigned char *, size_t);
 extern int (*sym_fido_cred_set_extensions)(fido_cred_t *, int);
+extern int (*sym_fido_cred_set_prot)(fido_cred_t *, int);
 extern int (*sym_fido_cred_set_rk)(fido_cred_t *, fido_opt_t);
 extern int (*sym_fido_cred_set_rp)(fido_cred_t *, const char *, const char *);
 extern int (*sym_fido_cred_set_type)(fido_cred_t *, int);
