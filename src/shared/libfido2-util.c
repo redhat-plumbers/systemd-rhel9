@@ -40,6 +40,7 @@ const unsigned char* (*sym_fido_cred_id_ptr)(const fido_cred_t *) = NULL;
 fido_cred_t* (*sym_fido_cred_new)(void) = NULL;
 int (*sym_fido_cred_set_clientdata_hash)(fido_cred_t *, const unsigned char *, size_t) = NULL;
 int (*sym_fido_cred_set_extensions)(fido_cred_t *, int) = NULL;
+int (*sym_fido_cred_set_prot)(fido_cred_t *, int) = NULL;
 int (*sym_fido_cred_set_rk)(fido_cred_t *, fido_opt_t) = NULL;
 int (*sym_fido_cred_set_rp)(fido_cred_t *, const char *, const char *) = NULL;
 int (*sym_fido_cred_set_type)(fido_cred_t *, int) = NULL;
@@ -89,6 +90,7 @@ int dlopen_libfido2(void) {
                         DLSYM_ARG(fido_cred_new),
                         DLSYM_ARG(fido_cred_set_clientdata_hash),
                         DLSYM_ARG(fido_cred_set_extensions),
+                        DLSYM_ARG(fido_cred_set_prot),
                         DLSYM_ARG(fido_cred_set_rk),
                         DLSYM_ARG(fido_cred_set_rp),
                         DLSYM_ARG(fido_cred_set_type),
@@ -632,10 +634,21 @@ int fido2_generate_hmac_hash(
         if (!c)
                 return log_oom();
 
-        r = sym_fido_cred_set_extensions(c, FIDO_EXT_HMAC_SECRET);
+        int extensions = FIDO_EXT_HMAC_SECRET;
+        if (FLAGS_SET(lock_with, FIDO2ENROLL_PIN) || FLAGS_SET(lock_with, FIDO2ENROLL_UV)) {
+                /* Attempt to use the "cred protect" extension, requiring user verification (UV) for this
+                 * credential. If the authenticator doesn't support the extension, it will be ignored. */
+                extensions |= FIDO_EXT_CRED_PROTECT;
+
+                r = sym_fido_cred_set_prot(c, FIDO_CRED_PROT_UV_REQUIRED);
+                if (r != FIDO_OK)
+                        log_warning("Failed to set protection level on FIDO2 credential, ignoring: %s", sym_fido_strerr(r));
+        }
+
+        r = sym_fido_cred_set_extensions(c, extensions);
         if (r != FIDO_OK)
                 return log_error_errno(SYNTHETIC_ERRNO(EIO),
-                                       "Failed to enable HMAC-SECRET extension on FIDO2 credential: %s", sym_fido_strerr(r));
+                                       "Failed to enable extensions on FIDO2 credential: %s", sym_fido_strerr(r));
 
         r = sym_fido_cred_set_rp(c, rp_id, rp_name);
         if (r != FIDO_OK)
@@ -686,7 +699,17 @@ int fido2_generate_hmac_hash(
                            emoji_enabled() ? special_glyph(SPECIAL_GLYPH_TOUCH) : "",
                            emoji_enabled() ? " " : "");
 
-        r = sym_fido_dev_make_cred(d, c, NULL);
+        /* If we are using the user PIN, then we must pass that PIN to the get_assertion call below, or
+         * the authenticator will use the non-user-verification HMAC secret (which differs from the one when
+         * the PIN is passed).
+         *
+         * Rather than potentially trying and failing to create the credential, just collect the PIN first
+         * and then pass it to both the make_credential and the get_assertion operations. */
+        if (FLAGS_SET(lock_with, FIDO2ENROLL_PIN))
+                r = FIDO_ERR_PIN_REQUIRED;
+        else
+                r = sym_fido_dev_make_cred(d, c, NULL);
+
         if (r == FIDO_ERR_PIN_REQUIRED) {
 
                 if (!has_client_pin)
