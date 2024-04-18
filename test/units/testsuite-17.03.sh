@@ -17,6 +17,12 @@ event_timeout=10
 timeout_signal=SIGABRT
 EOF
 
+    mkdir -p /run/systemd/system/systemd-udevd.service.d/
+    cat >/run/systemd/system/systemd-udevd.service.d/99-disable-coredumps.conf <<EOF
+[Service]
+LimitCORE=0
+EOF
+    systemctl daemon-reload
     systemctl restart systemd-udevd.service
 }
 
@@ -27,10 +33,11 @@ teardown() {
         kill "$KILL_PID"
     fi
 
-    rm -rf "$TMPDIR"
+    rm -rf "$TMPDIR" /run/systemd/system/systemd-udevd.service.d
 
     mv -f /etc/udev/udev.conf.bckp /etc/udev/udev.conf
     rm -f "$test_rule"
+    systemctl daemon-reload
     systemctl restart systemd-udevd.service
 }
 
