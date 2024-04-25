@@ -74,6 +74,68 @@ rm -fv /run/systemd/coredump.conf.d/99-external.conf
 # Wait a bit for the coredumps to get processed
 timeout 30 bash -c "while [[ \$(coredumpctl list -q --no-legend $CORE_TEST_BIN | wc -l) -lt 4 ]]; do sleep 1; done"
 
+# RHEL9: following part is taken out of 097e28736aed9280dfac0f8e8096deca71bac813 but slightly tweaked, since
+# in RHEL9 we don't have the support for coredump forwarding
+CONTAINER="testsuite-74-container"
+TESTUSER_UID="$(id -u testuser)"
+TESTUSER_GID="$(id -g testuser)"
+
+mkdir -p "/var/lib/machines/$CONTAINER"
+mkdir -p "/run/systemd/system/systemd-nspawn@$CONTAINER.service.d"
+# Bind-mounting /etc into the container kinda defeats the purpose of --volatile=,
+# but we need the ASan-related overrides scattered across /etc
+cat > "/run/systemd/system/systemd-nspawn@$CONTAINER.service.d/override.conf" << EOF
+[Service]
+ExecStart=
+ExecStart=systemd-nspawn --quiet --link-journal=try-guest --keep-unit --machine=%i --boot \
+                         --volatile=yes --directory=/ --bind-ro=/etc --inaccessible=/etc/machine-id
+EOF
+systemctl daemon-reload
+
+machinectl start "$CONTAINER"
+timeout 60 bash -xec "until systemd-run -M '$CONTAINER' -q --wait --pipe true; do sleep .5; done"
+machinectl copy-to "$CONTAINER" "$MAKE_DUMP_SCRIPT"
+
+run_namespaced_coredump_tests() {
+    local TS
+
+    # Make a couple of coredumps in a full-fleged container
+    TS="$(date +"%s.%N")"
+    [[ "$(coredumpctl list --since="@$TS" -q --no-legend /usr/bin/sleep | wc -l)" -eq 0 ]]
+    [[ "$(coredumpctl list --since="@$TS" -q --no-legend /usr/bin/sleep _UID="$TESTUSER_UID" | wc -l)" -eq 0 ]]
+    systemd-run -M "testuser@$CONTAINER" --user -q --wait --pipe "$MAKE_DUMP_SCRIPT" "/usr/bin/sleep" "SIGABRT"
+    systemd-run -M "$CONTAINER" -q --wait --pipe "$MAKE_DUMP_SCRIPT" "/usr/bin/sleep" "SIGTRAP"
+    # Wait a bit for the coredumps to get processed
+    timeout 30 bash -c "while [[ \$(coredumpctl list --since=@$TS -q --no-legend /usr/bin/sleep | wc -l) -ne 2 ]]; do sleep 1; done"
+    coredumpctl list
+    [[ "$(coredumpctl list --since="@$TS" -q --no-legend /usr/bin/sleep _UID="$TESTUSER_UID" _GID="$TESTUSER_GID" | wc -l)" -eq 1 ]]
+
+    # Simplified version of the above - not a full container, just a mount & pid namespace
+    TS="$(date +"%s.%N")"
+    unshare --mount --pid --fork --mount-proc /bin/bash -xec "$MAKE_DUMP_SCRIPT /usr/bin/sleep SIGABRT"
+    timeout 30 bash -c "while [[ \$(coredumpctl list --since=@$TS -q --no-legend /usr/bin/sleep | wc -l) -ne 1 ]]; do sleep 1; done"
+    TS="$(date +"%s.%N")"
+    unshare --setuid="$TESTUSER_UID" --setgid="$TESTUSER_GID" --mount --pid --fork --mount-proc /bin/bash -xec "$MAKE_DUMP_SCRIPT /usr/bin/sleep SIGABRT"
+    timeout 30 bash -c "while [[ \$(coredumpctl list --since=@$TS -q --no-legend /usr/bin/sleep _UID=$TESTUSER_UID _GID=$TESTUSER_GID | wc -l) -ne 1 ]]; do sleep 1; done"
+}
+
+# First, run the tests with default systemd-coredumpd settings
+run_namespaced_coredump_tests
+
+# And now with SYSTEMD_COREDUMP_ALLOW_NAMESPACE_CHANGE=1 (RHEL-only)
+cat >/tmp/coredump-handler.sh <<EOF
+#!/bin/bash
+export SYSTEMD_COREDUMP_ALLOW_NAMESPACE_CHANGE=1
+exec /usr/lib/systemd/systemd-coredump "\$@"
+EOF
+chmod +x /tmp/coredump-handler.sh
+sysctl -w kernel.core_pattern="|/tmp/coredump-handler.sh %P %u %g %s %t %c %h"
+run_namespaced_coredump_tests
+
+# Restore the original coredump handler
+sysctl -p /usr/lib/sysctl.d/50-coredump.conf
+sysctl kernel.core_pattern
+
 coredumpctl
 SYSTEMD_LOG_LEVEL=debug coredumpctl
 coredumpctl --help
@@ -89,7 +151,7 @@ coredumpctl --json=pretty | jq
 coredumpctl --json=off
 coredumpctl --root=/
 coredumpctl --directory=/var/log/journal
-coredumpctl --file="/var/log/journal/$(</etc/machine-id)/system.journal"
+coredumpctl --file="/var/log/journal/$(</etc/machine-id)"/*.journal
 coredumpctl --since=@0
 coredumpctl --since=yesterday --until=tomorrow
 # We should have a couple of externally stored coredumps
