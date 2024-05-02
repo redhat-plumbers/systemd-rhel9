@@ -32,5 +32,6 @@ jobs:
         uses: github/super-linter/slim@4ce20838b8ab83717e78138c5b3a1407148e0918
         env:
           DEFAULT_BRANCH: main
+          MULTI_STATUS: false
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_GITHUB_ACTIONS: true
