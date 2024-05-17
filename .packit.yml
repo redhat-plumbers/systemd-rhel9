@@ -18,7 +18,7 @@ srpm_build_deps: []
 actions:
   post-upstream-clone:
     # Use the CentOS Stream specfile
-    - "git clone https://gitlab.com/redhat/centos-stream/rpms/systemd.git .packit_rpm --depth=1"
+    - "git clone -b c9s https://gitlab.com/redhat/centos-stream/rpms/systemd.git .packit_rpm --depth=1"
     # Drop the "sources" file so rebase-helper doesn't think we're a dist-git
     - "rm -fv .packit_rpm/sources"
     # Drop all patches, since they're already included in the tarball
