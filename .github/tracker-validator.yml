@@ -8,6 +8,8 @@ products:
   - CentOS Stream 9
   - rhel-9.0.0
   - rhel-9.0.0.z
+  - rhel-9.1.0
+  - rhel-9.1.0.z
   - rhel-9.2.0
   - rhel-9.2.0.z
   - rhel-9.3.0
