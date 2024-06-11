@@ -6,6 +6,13 @@ set -eux
 # shellcheck source=test/units/assert.sh
 . "$(dirname "$0")"/assert.sh
 
+# On RHEL9 we don't have the `util.sh` script, so we need to define the `runas` function here
+runas() {
+    local userid="${1:?}"
+    shift
+    XDG_RUNTIME_DIR=/run/user/"$(id -u "$userid")" setpriv --reuid="$userid" --init-groups "$@"
+}
+
 systemctl log-level debug
 export SYSTEMD_LOG_LEVEL=debug
 
