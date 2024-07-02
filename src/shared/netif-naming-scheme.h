@@ -38,7 +38,8 @@ typedef enum NamingSchemeFlags {
         NAMING_16BIT_INDEX               = 1 << 11, /* Allow full 16-bit for the onboard index */
         NAMING_REPLACE_STRICTLY          = 1 << 12, /* Use udev_replace_ifname() for NAME= rule */
         NAMING_XEN_VIF                   = 1 << 13, /* Generate names for Xen netfront devices */
-        NAMING_BRIDGE_MULTIFUNCTION_SLOT = 1 << 14, /* Use PCI hotplug slot information associated with bridge, but only if PCI device is multifunction */
+        NAMING_BRIDGE_MULTIFUNCTION_SLOT = 1 << 14, /* Use PCI hotplug slot information associated with bridge, but only if PCI device is multifunction.
+                                                     * This is disabled since rhel-9.5, as it seems not to work at least for some setups. See upstream issue #28929. */
         NAMING_DEVICETREE_ALIASES        = 1 << 15, /* Generate names from devicetree aliases */
         NAMING_SR_IOV_R                  = 1 << 17, /* Use "r" suffix for SR-IOV VF representors */
 
@@ -72,6 +73,7 @@ typedef enum NamingSchemeFlags {
         NAMING_RHEL_9_2 = NAMING_RHEL_9_0,
         NAMING_RHEL_9_3 = NAMING_RHEL_9_0 | NAMING_SR_IOV_R,
         NAMING_RHEL_9_4 = NAMING_RHEL_9_3,
+        NAMING_RHEL_9_5 = NAMING_RHEL_9_4 & ~NAMING_BRIDGE_MULTIFUNCTION_SLOT,
 
         EXTRA_NET_NAMING_SCHEMES
 
