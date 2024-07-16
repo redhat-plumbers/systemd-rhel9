@@ -109,6 +109,10 @@ int generator_add_symlink_full(
         return 0;
 }
 
+int generator_add_symlink(const char *dir, const char *dst, const char *dep_type, const char *src) {
+        return generator_add_symlink_full(dir, dst, dep_type, src, NULL);
+}
+
 static int generator_add_ordering(
                 const char *dir,
                 const char *src,

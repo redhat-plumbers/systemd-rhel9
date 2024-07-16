@@ -13,10 +13,7 @@ int generator_open_unit_file(
         FILE **file);
 
 int generator_add_symlink_full(const char *dir, const char *dst, const char *dep_type, const char *src, const char *instance);
-
-static inline int generator_add_symlink(const char *dir, const char *dst, const char *dep_type, const char *src) {
-        return generator_add_symlink_full(dir, dst, dep_type, src, NULL);
-}
+int generator_add_symlink(const char *dir, const char *dst, const char *dep_type, const char *src);
 
 int generator_write_fsck_deps(
         FILE *f,
