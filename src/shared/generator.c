@@ -75,6 +75,10 @@ int generator_open_unit_file_full(
         return 0;
 }
 
+int generator_open_unit_file(const char *dest, const char *source, const char *name, FILE **ret_file) {
+        return generator_open_unit_file_full(dest, source, name, ret_file, NULL);
+}
+
 int generator_add_symlink_full(
                 const char *dir,
                 const char *dst,
@@ -123,6 +127,10 @@ int generator_add_symlink_full(
                 return log_error_errno(errno, "Failed to create symlink \"%s\": %m", to);
 
         return 0;
+}
+
+int generator_add_symlink(const char *dir, const char *dst, const char *dep_type, const char *src) {
+        return generator_add_symlink_full(dir, dst, dep_type, src, NULL);
 }
 
 static int generator_add_ordering(
