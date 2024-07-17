@@ -4,8 +4,8 @@ policy:
       - github: systemd/systemd
     exception:
       note:
-        - rhel-only
-        - RHEL-only
+        - 'rhel-only: (feature|bugfix|policy|doc|workaround|ci|test|other)'
+        - 'RHEL-only: (feature|bugfix|policy|doc|workaround|ci|test|other)'
   tracker:
     - keyword:
         - 'Resolves: #?'
