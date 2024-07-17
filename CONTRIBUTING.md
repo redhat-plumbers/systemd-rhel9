@@ -33,12 +33,20 @@ Every Pull Request has to comply with the following rules:
 ### Upstream reference
 
 When doing a back-port of an upstream commit, always use `cherry-pick -x <sha>`. Consider proposing a change upstream first when an upstream commit doesn't exist.
-If the change isn't upstream relevant or accepted by upstream, mark the commit with the `rhel-only` string.
+If the change isn't upstream relevant or accepted by upstream, mark the commit with the `rhel-only: <parameter>` string, where a `<parameter>` is:
+
+- `feature` - for feature-related commits (cross-version)
+- `bugfix` - for bugfix-related commits (cross-version)
+- `doc` - for documentation-related commits (usually version-specific)
+- `workaround` - for workaround-related commits (usually version-specific)
+- `ci` - for CI-related commits (version-specific)
+- `test` - for test-related commits (version-specific)
+- `other` - for commits that do not fit into any of the above categories (version-specific)
 
 ```md
 doc: Fix TYPO
 
-rhel-only
+rhel-only: doc
 
 Resolves: RHEL-678
 ```
