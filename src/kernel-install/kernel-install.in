@@ -160,7 +160,12 @@ if [ -z "$MACHINE_ID" ] && [ -f /etc/machine-info ]; then
 fi
 if [ -z "$MACHINE_ID" ] && [ -s /etc/machine-id ]; then
     read -r MACHINE_ID </etc/machine-id
-    [ "$MACHINE_ID" = "uninitialized" ] && unset MACHINE_ID
+    if [ "$MACHINE_ID" = "uninitialized" ]; then
+        unset MACHINE_ID
+    elif [ {{ '${#MACHINE_ID}' }} -ne 32 ]; then
+        echo "Error: invalid machine-id $MACHINE_ID read from /etc/machine-id" >&2
+        exit 1
+    fi
     [ -n "$MACHINE_ID" ] && \
         log_verbose "machine-id $MACHINE_ID acquired from /etc/machine-id"
 fi
