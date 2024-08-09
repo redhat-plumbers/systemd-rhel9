@@ -177,8 +177,26 @@ systemctl kill --signal=SIGKILL systemd-journald
 sleep 3
 [[ ! -f "/i-lose-my-logs" ]]
 
+set +o pipefail
 # https://github.com/systemd/systemd/issues/15528
-journalctl --follow --file=/var/log/journal/*/* | head -n1 || [[ $? -eq 1 ]]
+journalctl --follow --file=/var/log/journal/*/* | head -n1 | grep .
+# https://github.com/systemd/systemd/issues/24565
+journalctl --follow --merge | head -n1 | grep .
+set -o pipefail
+
+# https://github.com/systemd/systemd/issues/26746
+rm -f /tmp/issue-26746-log /tmp/issue-26746-cursor
+ID="$(systemd-id128 new)"
+journalctl -t "$ID" --follow --cursor-file=/tmp/issue-26746-cursor | tee /tmp/issue-26746-log &
+systemd-cat -t "$ID" /bin/sh -c 'echo hogehoge'
+# shellcheck disable=SC2016
+timeout 10 bash -c 'while ! [[ -f /tmp/issue-26746-log && "$(cat /tmp/issue-26746-log)" =~ hogehoge ]]; do sleep .5; done'
+pkill -TERM journalctl
+timeout 10 bash -c 'while ! test -f /tmp/issue-26746-cursor; do sleep .5; done'
+CURSOR_FROM_FILE="$(cat /tmp/issue-26746-cursor)"
+CURSOR_FROM_JOURNAL="$(journalctl -t "$ID" --output=export MESSAGE=hogehoge | sed -n -e '/__CURSOR=/ { s/__CURSOR=//; p }')"
+test "$CURSOR_FROM_FILE" = "$CURSOR_FROM_JOURNAL"
+
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=2183546
 mkdir /run/systemd/system/systemd-journald.service.d
@@ -211,5 +229,37 @@ rm /run/systemd/system/systemd-journald.service.d/compress.conf
 systemctl daemon-reload
 systemctl restart systemd-journald.service
 journalctl --rotate
+
+# Check that using --after-cursor/--cursor-file= together with journal filters doesn't
+# skip over entries matched by the filter
+# See: https://github.com/systemd/systemd/issues/30288
+UNIT_NAME="test-cursor-$RANDOM.service"
+CURSOR_FILE="$(mktemp)"
+# Generate some messages we can match against
+journalctl --cursor-file="$CURSOR_FILE" -n1
+systemd-run --unit="$UNIT_NAME" --wait --service-type=exec bash -xec "echo hello; echo world"
+journalctl --sync
+# --after-cursor= + --unit=
+# The format of the "Starting ..." message depends on StatusUnitFormat=, so match only the beginning
+# which should be enough in this case
+[[ "$(journalctl -n 1 -p info -o cat --unit="$UNIT_NAME" --after-cursor="$(<"$CURSOR_FILE")" _PID=1 )" =~ ^Starting\  ]]
+# There should be no such messages before the cursor
+[[ -z "$(journalctl -n 1 -p info -o cat --unit="$UNIT_NAME" --after-cursor="$(<"$CURSOR_FILE")" --reverse)" ]]
+# --cursor-file= + a journal filter
+diff <(journalctl --cursor-file="$CURSOR_FILE" -p info -o cat _SYSTEMD_UNIT="$UNIT_NAME") - <<EOF
++ echo hello
+hello
++ echo world
+world
+EOF
+rm -f "$CURSOR_FILE"
+
+# Check that --until works with --after-cursor and --lines/-n
+# See: https://github.com/systemd/systemd/issues/31776
+CURSOR_FILE="$(mktemp)"
+journalctl -q -n 0 --cursor-file="$CURSOR_FILE"
+TIMESTAMP="$(journalctl -q -n 1 --cursor="$(<"$CURSOR_FILE")" --output=short-unix | cut -d ' ' -f 1 | cut -d '.' -f 1)"
+[[ -z "$(journalctl -q -n 10 --after-cursor="$(<"$CURSOR_FILE")" --until "@$((TIMESTAMP - 3))")" ]]
+rm -f "$CURSOR_FILE"
 
 touch /testok
