@@ -207,6 +207,50 @@
     WSL is categorized as a container for practical purposes.
     Multiple WSL environments share the same kernel and services
     should generally behave like when being run in a container.</para>
+
+    <para>When executed with <option>--cvm</option>, instead of
+    printing the virtualization technology, it will display the
+    confidential virtual machine technology, if any. The
+    following technologies are currently identified:</para>
+
+    <table>
+      <title>Known confidential virtualization technologies</title>
+      <tgroup cols='2' align='left' colsep='1' rowsep='1'>
+        <colspec colname="id" />
+        <colspec colname="product" />
+        <thead>
+          <row>
+            <entry>Arch</entry>
+            <entry>ID</entry>
+            <entry>Technology</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry valign="top" morerows="3">x86_64</entry>
+            <entry><varname>sev</varname></entry>
+            <entry>AMD Secure Encrypted Virtualization</entry>
+          </row>
+          <row>
+            <entry><varname>sev-es</varname></entry>
+            <entry>AMD Secure Encrypted Virtualization - Encrypted State</entry>
+          </row>
+          <row>
+            <entry><varname>sev-snp</varname></entry>
+            <entry>AMD Secure Encrypted Virtualization - Secure Nested Paging</entry>
+          </row>
+          <row>
+            <entry><varname>tdx</varname></entry>
+            <entry>Intel Trust Domain Extensions</entry>
+          </row>
+          <row>
+            <entry>s390x</entry>
+            <entry><varname>protvirt</varname></entry>
+            <entry>IBM Protected Virtualization (Secure Execution)</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </table>
   </refsect1>
 
   <refsect1>
@@ -253,6 +297,16 @@
       </varlistentry>
 
       <varlistentry>
+        <term><option>--cvm</option></term>
+
+        <listitem><para>Detect whether invoked in a confidential virtual machine.
+        The result of this detection may be used to disable features that should
+        not be used in confidential VMs. It must not be used to release security
+        sensitive information. The latter must only be released after attestation
+        of the confidential environment.</para></listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><option>-q</option></term>
         <term><option>--quiet</option></term>
 
@@ -264,6 +318,12 @@
         <term><option>--list</option></term>
 
         <listitem><para>Output all currently known and detectable container and VM environments.</para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--list-cvm</option></term>
+
+        <listitem><para>Output all currently known and detectable confidential virtualization technologies.</para></listitem>
       </varlistentry>
 
       <xi:include href="standard-options.xml" xpointer="help" />
