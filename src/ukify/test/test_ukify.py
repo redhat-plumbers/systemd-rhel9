@@ -35,6 +35,13 @@ except ImportError as e:
 sys.path.append(os.path.dirname(__file__) + '/..')
 import ukify
 
+# Skip if we're running on an architecture that does not use UEFI.
+try:
+    ukify.guess_efi_arch()
+except ValueError as e:
+    print(str(e), file=sys.stderr)
+    sys.exit(77)
+
 build_root = os.getenv('PROJECT_BUILD_ROOT')
 arg_tools = ['--tools', build_root] if build_root else []
 
