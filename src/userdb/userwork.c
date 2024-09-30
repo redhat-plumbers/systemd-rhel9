@@ -9,12 +9,13 @@
 #include "fd-util.h"
 #include "group-record.h"
 #include "io-util.h"
+#include "json.h"
 #include "main-func.h"
 #include "process-util.h"
 #include "strv.h"
 #include "time-util.h"
-#include "user-record-nss.h"
 #include "user-record.h"
+#include "user-record-nss.h"
 #include "user-util.h"
 #include "userdb.h"
 #include "varlink.h"
@@ -131,9 +132,9 @@ static int userdb_flags_from_service(Varlink *link, const char *service, UserDBF
 static int vl_method_get_user_record(Varlink *link, JsonVariant *parameters, VarlinkMethodFlags flags, void *userdata) {
 
         static const JsonDispatch dispatch_table[] = {
-                { "uid",      JSON_VARIANT_UNSIGNED, json_dispatch_uid_gid,      offsetof(LookupParameters, uid),       0 },
-                { "userName", JSON_VARIANT_STRING,   json_dispatch_const_string, offsetof(LookupParameters, user_name), 0 },
-                { "service",  JSON_VARIANT_STRING,   json_dispatch_const_string, offsetof(LookupParameters, service),   0 },
+                { "uid",      JSON_VARIANT_UNSIGNED, json_dispatch_uid_gid,               offsetof(LookupParameters, uid),       0          },
+                { "userName", JSON_VARIANT_STRING,   json_dispatch_const_user_group_name, offsetof(LookupParameters, user_name), JSON_RELAX },
+                { "service",  JSON_VARIANT_STRING,   json_dispatch_const_string,          offsetof(LookupParameters, service),   0          },
                 {}
         };
 
@@ -267,9 +268,9 @@ static int build_group_json(Varlink *link, GroupRecord *gr, JsonVariant **ret) {
 static int vl_method_get_group_record(Varlink *link, JsonVariant *parameters, VarlinkMethodFlags flags, void *userdata) {
 
         static const JsonDispatch dispatch_table[] = {
-                { "gid",       JSON_VARIANT_UNSIGNED, json_dispatch_uid_gid,      offsetof(LookupParameters, gid),        0 },
-                { "groupName", JSON_VARIANT_STRING,   json_dispatch_const_string, offsetof(LookupParameters, group_name), 0 },
-                { "service",   JSON_VARIANT_STRING,   json_dispatch_const_string, offsetof(LookupParameters, service),    0 },
+                { "gid",       JSON_VARIANT_UNSIGNED, json_dispatch_uid_gid,               offsetof(LookupParameters, gid),        0          },
+                { "groupName", JSON_VARIANT_STRING,   json_dispatch_const_user_group_name, offsetof(LookupParameters, group_name), JSON_RELAX },
+                { "service",   JSON_VARIANT_STRING,   json_dispatch_const_string,          offsetof(LookupParameters, service),    0          },
                 {}
         };
 
@@ -352,9 +353,9 @@ static int vl_method_get_group_record(Varlink *link, JsonVariant *parameters, Va
 
 static int vl_method_get_memberships(Varlink *link, JsonVariant *parameters, VarlinkMethodFlags flags, void *userdata) {
         static const JsonDispatch dispatch_table[] = {
-                { "userName",  JSON_VARIANT_STRING, json_dispatch_const_string, offsetof(LookupParameters, user_name), 0 },
-                { "groupName", JSON_VARIANT_STRING, json_dispatch_const_string, offsetof(LookupParameters, group_name), 0 },
-                { "service",   JSON_VARIANT_STRING, json_dispatch_const_string, offsetof(LookupParameters, service),   0 },
+                { "userName",  JSON_VARIANT_STRING, json_dispatch_const_user_group_name, offsetof(LookupParameters, user_name),  JSON_RELAX },
+                { "groupName", JSON_VARIANT_STRING, json_dispatch_const_user_group_name, offsetof(LookupParameters, group_name), JSON_RELAX },
+                { "service",   JSON_VARIANT_STRING, json_dispatch_const_string,          offsetof(LookupParameters, service),    0          },
                 {}
         };
 
