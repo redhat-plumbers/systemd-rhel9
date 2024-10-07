@@ -1553,7 +1553,6 @@ _public_ int sd_event_add_child_pidfd(
                 sd_event_child_handler_t callback,
                 void *userdata) {
 
-
         _cleanup_(source_freep) sd_event_source *s = NULL;
         pid_t pid;
         int r;

@@ -1003,7 +1003,6 @@ static int client_append_common_discover_request_options(sd_dhcp_client *client,
                         return r;
         }
 
-
         return 0;
 }
 

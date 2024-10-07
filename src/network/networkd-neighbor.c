@@ -593,7 +593,6 @@ void network_drop_invalid_neighbors(Network *network) {
                         neighbor_free(neighbor);
 }
 
-
 int config_parse_neighbor_address(
                 const char *unit,
                 const char *filename,

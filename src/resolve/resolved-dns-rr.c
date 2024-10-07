@@ -2019,7 +2019,6 @@ int dns_resource_record_to_json(DnsResourceRecord *rr, JsonVariant **ret) {
                                                   JSON_BUILD_PAIR("algorithm", JSON_BUILD_UNSIGNED(rr->dnskey.algorithm)),
                                                   JSON_BUILD_PAIR("dnskey", JSON_BUILD_BASE64(rr->dnskey.key, rr->dnskey.key_size))));
 
-
         case DNS_TYPE_RRSIG:
                 return json_build(ret,
                                   JSON_BUILD_OBJECT(

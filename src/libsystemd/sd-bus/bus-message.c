@@ -4118,7 +4118,6 @@ static int message_parse_fields(sd_bus_message *m) {
                         if (m->reply_cookie != 0)
                                 return -EBADMSG;
 
-
                         if (!streq(signature, "u"))
                                 return -EBADMSG;
 
