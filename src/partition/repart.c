@@ -2669,7 +2669,6 @@ static int context_dump(Context *context, const char *node, bool late) {
         return 0;
 }
 
-
 static bool context_changed(const Context *context) {
         assert(context);
 

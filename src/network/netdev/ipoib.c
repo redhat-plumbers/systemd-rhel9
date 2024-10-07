@@ -149,7 +149,6 @@ int config_parse_ipoib_pkey(
         return 0;
 }
 
-
 const NetDevVTable ipoib_vtable = {
         .object_size = sizeof(IPoIB),
         .sections = NETDEV_COMMON_SECTIONS "IPoIB\0",

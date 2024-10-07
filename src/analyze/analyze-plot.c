@@ -28,7 +28,6 @@
                 svg("</text>\n");                                       \
         } while (false)
 
-
 typedef struct HostInfo {
         char *hostname;
         char *kernel_name;
