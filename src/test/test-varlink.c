@@ -10,6 +10,7 @@
 #include "json.h"
 #include "rm-rf.h"
 #include "strv.h"
+#include "tests.h"
 #include "tmpfile-util.h"
 #include "user-util.h"
 #include "varlink.h"
@@ -184,7 +185,7 @@ static int block_fd_handler(sd_event_source *s, int fd, uint32_t revents, void *
         return 0;
 }
 
-int main(int argc, char *argv[]) {
+TEST(chat) {
         _cleanup_(sd_event_source_unrefp) sd_event_source *block_event = NULL;
         _cleanup_(varlink_server_unrefp) VarlinkServer *s = NULL;
         _cleanup_(varlink_flush_close_unrefp) Varlink *c = NULL;
@@ -234,6 +235,59 @@ int main(int argc, char *argv[]) {
         assert_se(sd_event_loop(e) >= 0);
 
         assert_se(pthread_join(t, NULL) == 0);
+}
 
+static int method_invalid(Varlink *link, JsonVariant *parameters, VarlinkMethodFlags flags, void *userdata) {
+        int r;
+
+        JsonDispatch table[] = {
+                { "iexist", JSON_VARIANT_STRING, json_dispatch_const_string, 0, JSON_MANDATORY },
+                {}
+        };
+
+        const char *p = NULL;
+
+        r = varlink_dispatch(link, parameters, table, &p);
+        if (r != 0)
+                return r;
+
+        assert_not_reached();
+}
+
+static int reply_invalid(Varlink *link, JsonVariant *parameters, const char *error_id, VarlinkReplyFlags flags, void *userdata) {
+        assert(varlink_error_is_invalid_parameter(error_id, parameters, "idontexist"));
+        assert(sd_event_exit(varlink_get_event(link), EXIT_SUCCESS) >= 0);
         return 0;
 }
+
+TEST(invalid_parameter) {
+        _cleanup_(sd_event_unrefp) sd_event *e = NULL;
+        assert_se(sd_event_default(&e) >= 0);
+
+        _cleanup_(varlink_server_unrefp) VarlinkServer *s = NULL;
+        assert_se(varlink_server_new(&s, 0) >= 0);
+
+        assert_se(varlink_server_attach_event(s, e, 0) >= 0);
+
+        assert_se(varlink_server_bind_method(s, "foo.mytest.Invalid", method_invalid) >= 0);
+
+        int connfd[2];
+        assert_se(socketpair(AF_UNIX, SOCK_STREAM|SOCK_NONBLOCK|SOCK_CLOEXEC, 0, connfd) >= 0);
+        assert_se(varlink_server_add_connection(s, connfd[0], /* ret= */ NULL) >= 0);
+
+        _cleanup_(varlink_unrefp) Varlink *c = NULL;
+        assert_se(varlink_connect_fd(&c, connfd[1]) >= 0);
+
+        assert_se(varlink_attach_event(c, e, 0) >= 0);
+
+        assert_se(varlink_bind_reply(c, reply_invalid) >= 0);
+
+        assert_se(varlink_invokeb(c, "foo.mytest.Invalid", JSON_BUILD_OBJECT(
+                                      JSON_BUILD_PAIR_STRING("iexist", "foo"),
+                                      JSON_BUILD_PAIR_STRING("idontexist", "bar"))) >= 0);
+
+
+        assert_se(sd_event_loop(e) >= 0);
+}
+
+DEFINE_TEST_MAIN(LOG_DEBUG);
