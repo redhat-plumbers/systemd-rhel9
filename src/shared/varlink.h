@@ -161,6 +161,8 @@ unsigned varlink_server_current_connections(VarlinkServer *s);
 
 int varlink_server_set_description(VarlinkServer *s, const char *description);
 
+int varlink_error_is_invalid_parameter(const char *error, JsonVariant *parameter, const char *name);
+
 DEFINE_TRIVIAL_CLEANUP_FUNC(Varlink *, varlink_unref);
 DEFINE_TRIVIAL_CLEANUP_FUNC(Varlink *, varlink_close_unref);
 DEFINE_TRIVIAL_CLEANUP_FUNC(Varlink *, varlink_flush_close_unref);

@@ -2687,3 +2687,23 @@ int varlink_server_deserialize_one(VarlinkServer *s, const char *value, FDSet *f
         LIST_PREPEND(sockets, s->sockets, TAKE_PTR(ss));
         return 0;
 }
+
+int varlink_error_is_invalid_parameter(const char *error, JsonVariant *parameter, const char *name) {
+
+        /* Returns true if the specified error result is an invalid parameter error for the parameter 'name' */
+
+        if (!streq_ptr(error, VARLINK_ERROR_INVALID_PARAMETER))
+                return false;
+
+        if (!name)
+                return true;
+
+        if (!json_variant_is_object(parameter))
+                return false;
+
+        JsonVariant *e = json_variant_by_key(parameter, "parameter");
+        if (!e || !json_variant_is_string(e))
+                return false;
+
+        return streq(json_variant_string(e), name);
+}
