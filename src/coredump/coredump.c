@@ -1067,9 +1067,10 @@ static int save_context(Context *context, const struct iovec_wrapper *iovw) {
                 }
         }
 
-        if (!context->meta[META_ARGV_PID])
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
-                                       "Failed to find the PID of crashing process");
+        /* The basic fields from argv[] should always be there, refuse early if not */
+        for (int i = 0; i < _META_ARGV_MAX; i++)
+                if (!context->meta[i])
+                        return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "A required (%s) has not been sent, aborting.", meta_field_names[i]);
 
         r = parse_pid(context->meta[META_ARGV_PID], &context->pid);
         if (r < 0)
