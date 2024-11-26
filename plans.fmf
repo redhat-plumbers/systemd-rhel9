@@ -1,8 +1,10 @@
-tier1-internal:
-  summary: Basic systemd tests
-  discover:
-      how: fmf
-  execute:
-      how: tmt
-  provision:
-      how: virtual
+/tier1-internal:
+    discover:
+        how: fmf
+        url: https://gitlab.com/redhat/rhel/tests/systemd.git
+        filter: 'tier: 1'
+    execute:
+        how: tmt
+    adjust:
+        enabled: false
+        when: distro == centos-stream or distro == fedora
