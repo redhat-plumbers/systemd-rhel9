@@ -138,9 +138,9 @@ static int user_lookup_name(Manager *m, const char *name, uid_t *ret_uid, char *
 static int vl_method_get_user_record(Varlink *link, JsonVariant *parameters, VarlinkMethodFlags flags, void *userdata) {
 
         static const JsonDispatch dispatch_table[] = {
-                { "uid",      JSON_VARIANT_UNSIGNED, json_dispatch_uid_gid,      offsetof(LookupParameters, uid),       0         },
-                { "userName", JSON_VARIANT_STRING,   json_dispatch_const_string, offsetof(LookupParameters, user_name), JSON_SAFE },
-                { "service",  JSON_VARIANT_STRING,   json_dispatch_const_string, offsetof(LookupParameters, service),   0         },
+                { "uid",      JSON_VARIANT_UNSIGNED, json_dispatch_uid_gid,               offsetof(LookupParameters, uid),       0          },
+                { "userName", JSON_VARIANT_STRING,   json_dispatch_const_user_group_name, offsetof(LookupParameters, user_name), JSON_RELAX },
+                { "service",  JSON_VARIANT_STRING,   json_dispatch_const_string,          offsetof(LookupParameters, service),   0          },
                 {}
         };
 
@@ -156,8 +156,8 @@ static int vl_method_get_user_record(Varlink *link, JsonVariant *parameters, Var
 
         assert(parameters);
 
-        r = json_dispatch(parameters, dispatch_table, NULL, 0, &p);
-        if (r < 0)
+        r = varlink_dispatch(link, parameters, dispatch_table, &p);
+        if (r != 0)
                 return r;
 
         if (!streq_ptr(p.service, "io.systemd.Machine"))
@@ -303,9 +303,9 @@ static int group_lookup_name(Manager *m, const char *name, gid_t *ret_gid, char 
 static int vl_method_get_group_record(Varlink *link, JsonVariant *parameters, VarlinkMethodFlags flags, void *userdata) {
 
         static const JsonDispatch dispatch_table[] = {
-                { "gid",       JSON_VARIANT_UNSIGNED, json_dispatch_uid_gid,      offsetof(LookupParameters, gid),        0         },
-                { "groupName", JSON_VARIANT_STRING,   json_dispatch_const_string, offsetof(LookupParameters, group_name), JSON_SAFE },
-                { "service",   JSON_VARIANT_STRING,   json_dispatch_const_string, offsetof(LookupParameters, service),    0         },
+                { "gid",       JSON_VARIANT_UNSIGNED, json_dispatch_uid_gid,               offsetof(LookupParameters, gid),        0          },
+                { "groupName", JSON_VARIANT_STRING,   json_dispatch_const_user_group_name, offsetof(LookupParameters, group_name), JSON_RELAX },
+                { "service",   JSON_VARIANT_STRING,   json_dispatch_const_string,          offsetof(LookupParameters, service),    0          },
                 {}
         };
 
@@ -321,8 +321,8 @@ static int vl_method_get_group_record(Varlink *link, JsonVariant *parameters, Va
 
         assert(parameters);
 
-        r = json_dispatch(parameters, dispatch_table, NULL, 0, &p);
-        if (r < 0)
+        r = varlink_dispatch(link, parameters, dispatch_table, &p);
+        if (r != 0)
                 return r;
 
         if (!streq_ptr(p.service, "io.systemd.Machine"))
@@ -355,9 +355,9 @@ static int vl_method_get_group_record(Varlink *link, JsonVariant *parameters, Va
 static int vl_method_get_memberships(Varlink *link, JsonVariant *parameters, VarlinkMethodFlags flags, void *userdata) {
 
         static const JsonDispatch dispatch_table[] = {
-                { "userName",  JSON_VARIANT_STRING, json_dispatch_const_string, offsetof(LookupParameters, user_name),  JSON_SAFE },
-                { "groupName", JSON_VARIANT_STRING, json_dispatch_const_string, offsetof(LookupParameters, group_name), JSON_SAFE },
-                { "service",   JSON_VARIANT_STRING, json_dispatch_const_string, offsetof(LookupParameters, service),    0         },
+                { "userName",  JSON_VARIANT_STRING, json_dispatch_const_user_group_name, offsetof(LookupParameters, user_name),  JSON_RELAX },
+                { "groupName", JSON_VARIANT_STRING, json_dispatch_const_user_group_name, offsetof(LookupParameters, group_name), JSON_RELAX },
+                { "service",   JSON_VARIANT_STRING, json_dispatch_const_string,          offsetof(LookupParameters, service),    0          },
                 {}
         };
 
@@ -366,8 +366,8 @@ static int vl_method_get_memberships(Varlink *link, JsonVariant *parameters, Var
 
         assert(parameters);
 
-        r = json_dispatch(parameters, dispatch_table, NULL, 0, &p);
-        if (r < 0)
+        r = varlink_dispatch(link, parameters, dispatch_table, &p);
+        if (r != 0)
                 return r;
 
         if (!streq_ptr(p.service, "io.systemd.Machine"))

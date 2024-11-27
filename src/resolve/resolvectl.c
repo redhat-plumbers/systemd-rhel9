@@ -2598,7 +2598,7 @@ static int monitor_rkey_from_json(JsonVariant *v, DnsResourceKey **ret_key) {
         assert(v);
         assert(ret_key);
 
-        r = json_dispatch(v, dispatch_table, NULL, 0, NULL);
+        r = json_dispatch(v, dispatch_table, 0, NULL);
         if (r < 0)
                 return r;
 
@@ -2697,7 +2697,7 @@ static void monitor_query_dump(JsonVariant *v) {
                 {}
         };
 
-        r = json_dispatch(v, dispatch_table, NULL, 0, NULL);
+        r = json_dispatch(v, dispatch_table, 0, NULL);
         if (r < 0)
                 return (void) log_warning("Received malformed monitor message, ignoring.");
 

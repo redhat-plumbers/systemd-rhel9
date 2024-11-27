@@ -159,9 +159,15 @@ static int userdb_on_query_reply(
         if (error_id) {
                 log_debug("Got lookup error: %s", error_id);
 
+                /* Convert various forms of record not found into -ESRCH, since NSS typically doesn't care,
+                 * about the details. Note that if a userName specification is refused as invalid parameter,
+                 * we also turn this into -ESRCH following the logic that there cannot be a user record for a
+                 * completely invalid user name. */
                 if (STR_IN_SET(error_id,
                                "io.systemd.UserDatabase.NoRecordFound",
-                               "io.systemd.UserDatabase.ConflictingRecordFound"))
+                               "io.systemd.UserDatabase.ConflictingRecordFound") ||
+                    varlink_error_is_invalid_parameter(error_id, parameters, "userName") ||
+                    varlink_error_is_invalid_parameter(error_id, parameters, "groupName"))
                         r = -ESRCH;
                 else if (streq(error_id, "io.systemd.UserDatabase.ServiceNotAvailable"))
                         r = -EHOSTDOWN;
@@ -189,7 +195,7 @@ static int userdb_on_query_reply(
 
                 assert_se(!iterator->found_user);
 
-                r = json_dispatch(parameters, dispatch_table, NULL, 0, &user_data);
+                r = json_dispatch(parameters, dispatch_table, 0, &user_data);
                 if (r < 0)
                         goto finish;
 
@@ -246,7 +252,7 @@ static int userdb_on_query_reply(
 
                 assert_se(!iterator->found_group);
 
-                r = json_dispatch(parameters, dispatch_table, NULL, 0, &group_data);
+                r = json_dispatch(parameters, dispatch_table, 0, &group_data);
                 if (r < 0)
                         goto finish;
 
@@ -302,7 +308,7 @@ static int userdb_on_query_reply(
                 assert(!iterator->found_user_name);
                 assert(!iterator->found_group_name);
 
-                r = json_dispatch(parameters, dispatch_table, NULL, 0, &membership_data);
+                r = json_dispatch(parameters, dispatch_table, 0, &membership_data);
                 if (r < 0)
                         goto finish;
 

@@ -653,7 +653,7 @@ static int dispatch_secret(const char *name, JsonVariant *variant, JsonDispatchF
                 {},
         };
 
-        return json_dispatch(variant, secret_dispatch_table, NULL, flags, userdata);
+        return json_dispatch(variant, secret_dispatch_table, flags, userdata);
 }
 
 static int dispatch_pkcs11_uri(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata) {
@@ -782,7 +782,7 @@ static int dispatch_pkcs11_key(const char *name, JsonVariant *variant, JsonDispa
                 k = h->pkcs11_encrypted_key + h->n_pkcs11_encrypted_key;
                 *k = (Pkcs11EncryptedKey) {};
 
-                r = json_dispatch(e, pkcs11_key_dispatch_table, NULL, flags, k);
+                r = json_dispatch(e, pkcs11_key_dispatch_table, flags, k);
                 if (r < 0) {
                         pkcs11_encrypted_key_done(k);
                         return r;
@@ -916,7 +916,7 @@ static int dispatch_fido2_hmac_salt(const char *name, JsonVariant *variant, Json
                         .client_pin = -1,
                 };
 
-                r = json_dispatch(e, fido2_hmac_salt_dispatch_table, NULL, flags, k);
+                r = json_dispatch(e, fido2_hmac_salt_dispatch_table, flags, k);
                 if (r < 0) {
                         fido2_hmac_salt_done(k);
                         return r;
@@ -956,7 +956,7 @@ static int dispatch_recovery_key(const char *name, JsonVariant *variant, JsonDis
                 k = h->recovery_key + h->n_recovery_key;
                 *k = (RecoveryKey) {};
 
-                r = json_dispatch(e, recovery_key_dispatch_table, NULL, flags, k);
+                r = json_dispatch(e, recovery_key_dispatch_table, flags, k);
                 if (r < 0) {
                         recovery_key_done(k);
                         return r;
@@ -1038,7 +1038,7 @@ static int dispatch_privileged(const char *name, JsonVariant *variant, JsonDispa
                 {},
         };
 
-        return json_dispatch(variant, privileged_dispatch_table, NULL, flags, userdata);
+        return json_dispatch(variant, privileged_dispatch_table, flags, userdata);
 }
 
 static int dispatch_binding(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata) {
@@ -1077,7 +1077,7 @@ static int dispatch_binding(const char *name, JsonVariant *variant, JsonDispatch
         if (!m)
                 return 0;
 
-        return json_dispatch(m, binding_dispatch_table, NULL, flags, userdata);
+        return json_dispatch(m, binding_dispatch_table, flags, userdata);
 }
 
 int per_machine_id_match(JsonVariant *ids, JsonDispatchFlags flags) {
@@ -1276,7 +1276,7 @@ static int dispatch_per_machine(const char *name, JsonVariant *variant, JsonDisp
                 if (!matching)
                         continue;
 
-                r = json_dispatch(e, per_machine_dispatch_table, NULL, flags, userdata);
+                r = json_dispatch(e, per_machine_dispatch_table, flags, userdata);
                 if (r < 0)
                         return r;
         }
@@ -1325,7 +1325,7 @@ static int dispatch_status(const char *name, JsonVariant *variant, JsonDispatchF
         if (!m)
                 return 0;
 
-        return json_dispatch(m, status_dispatch_table, NULL, flags, userdata);
+        return json_dispatch(m, status_dispatch_table, flags, userdata);
 }
 
 int user_record_build_image_path(UserStorage storage, const char *user_name_and_realm, char **ret) {
@@ -1615,7 +1615,7 @@ int user_record_load(UserRecord *h, JsonVariant *v, UserRecordLoadFlags load_fla
         if (r < 0)
                 return r;
 
-        r = json_dispatch(h->json, user_dispatch_table, NULL, json_flags, h);
+        r = json_dispatch(h->json, user_dispatch_table, json_flags, h);
         if (r < 0)
                 return r;
 

@@ -4227,7 +4227,13 @@ static void *dispatch_userdata(const JsonDispatch *p, void *userdata) {
         return SIZE_TO_PTR(p->offset);
 }
 
-int json_dispatch(JsonVariant *v, const JsonDispatch table[], JsonDispatchCallback bad, JsonDispatchFlags flags, void *userdata) {
+int json_dispatch_full(
+                JsonVariant *v,
+                const JsonDispatch table[],
+                JsonDispatchCallback bad,
+                JsonDispatchFlags flags,
+                void *userdata,
+                const char **reterr_bad_field) {
         size_t m;
         int r, done = 0;
         bool *found;
@@ -4237,6 +4243,9 @@ int json_dispatch(JsonVariant *v, const JsonDispatch table[], JsonDispatchCallba
 
                 if (flags & JSON_PERMISSIVE)
                         return 0;
+
+                if (reterr_bad_field)
+                        *reterr_bad_field = NULL;
 
                 return -EINVAL;
         }
@@ -4260,7 +4269,7 @@ int json_dispatch(JsonVariant *v, const JsonDispatch table[], JsonDispatchCallba
                             streq_ptr(json_variant_string(key), p->name))
                                 break;
 
-                if (p->name) { /* Found a matching entry! :-) */
+                if (p->name) { /* Found a matching entry! 🙂 */
                         JsonDispatchFlags merged_flags;
 
                         merged_flags = flags | p->flags;
@@ -4275,6 +4284,9 @@ int json_dispatch(JsonVariant *v, const JsonDispatch table[], JsonDispatchCallba
                                 if (merged_flags & JSON_PERMISSIVE)
                                         continue;
 
+                                if (reterr_bad_field)
+                                        *reterr_bad_field = p->name;
+
                                 return -EINVAL;
                         }
 
@@ -4283,6 +4295,9 @@ int json_dispatch(JsonVariant *v, const JsonDispatch table[], JsonDispatchCallba
 
                                 if (merged_flags & JSON_PERMISSIVE)
                                         continue;
+
+                                if (reterr_bad_field)
+                                        *reterr_bad_field = p->name;
 
                                 return -ENOTUNIQ;
                         }
@@ -4295,19 +4310,25 @@ int json_dispatch(JsonVariant *v, const JsonDispatch table[], JsonDispatchCallba
                                         if (merged_flags & JSON_PERMISSIVE)
                                                 continue;
 
+                                        if (reterr_bad_field)
+                                                *reterr_bad_field = json_variant_string(key);
+
                                         return r;
                                 }
                         }
 
                         done ++;
 
-                } else { /* Didn't find a matching entry! :-( */
+                } else { /* Didn't find a matching entry! ☹️ */
 
                         if (bad) {
                                 r = bad(json_variant_string(key), value, flags, userdata);
                                 if (r < 0) {
                                         if (flags & JSON_PERMISSIVE)
                                                 continue;
+
+                                        if (reterr_bad_field)
+                                                *reterr_bad_field = json_variant_string(key);
 
                                         return r;
                                 } else
@@ -4318,6 +4339,9 @@ int json_dispatch(JsonVariant *v, const JsonDispatch table[], JsonDispatchCallba
 
                                 if (flags & JSON_PERMISSIVE)
                                         continue;
+
+                                if (reterr_bad_field)
+                                        *reterr_bad_field = json_variant_string(key);
 
                                 return -EADDRNOTAVAIL;
                         }
@@ -4333,11 +4357,22 @@ int json_dispatch(JsonVariant *v, const JsonDispatch table[], JsonDispatchCallba
                         if ((merged_flags & JSON_PERMISSIVE))
                                 continue;
 
+                        if (reterr_bad_field)
+                                *reterr_bad_field = p->name;
+
                         return -ENXIO;
                 }
         }
 
         return done;
+}
+
+int json_dispatch(
+                JsonVariant *v,
+                const JsonDispatch table[],
+                JsonDispatchFlags flags,
+                void *userdata) {
+        return json_dispatch_full(v, table, NULL, flags, userdata, NULL);
 }
 
 int json_dispatch_boolean(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata) {
@@ -4578,7 +4613,7 @@ int json_dispatch_uid_gid(const char *name, JsonVariant *variant, JsonDispatchFl
 }
 
 int json_dispatch_user_group_name(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata) {
-        char **s = userdata;
+        char **s = ASSERT_PTR(userdata);
         const char *n;
         int r;
 
@@ -4598,6 +4633,25 @@ int json_dispatch_user_group_name(const char *name, JsonVariant *variant, JsonDi
         if (r < 0)
                 return json_log(variant, flags, r, "Failed to allocate string: %m");
 
+        return 0;
+}
+
+int json_dispatch_const_user_group_name(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata) {
+        const char **s = ASSERT_PTR(userdata), *n;
+
+        if (json_variant_is_null(variant)) {
+                *s = NULL;
+                return 0;
+        }
+
+        if (!json_variant_is_string(variant))
+                return json_log(variant, flags, SYNTHETIC_ERRNO(EINVAL), "JSON field '%s' is not a string.", strna(name));
+
+        n = json_variant_string(variant);
+        if (!valid_user_group_name(n, FLAGS_SET(flags, JSON_RELAX) ? VALID_USER_RELAX : 0))
+                return json_log(variant, flags, SYNTHETIC_ERRNO(EINVAL), "JSON field '%s' is not a valid user/group name.", strna(name));
+
+        *s = n;
         return 0;
 }
 
