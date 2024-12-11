@@ -3446,8 +3446,7 @@ static void service_notify_cgroup_empty_event(Unit *u) {
 
         /* If the cgroup empty notification comes when the unit is not active, we must have failed to clean
          * up the cgroup earlier and should do it now. */
-        case SERVICE_DEAD:
-        case SERVICE_FAILED:
+        case SERVICE_AUTO_RESTART:
                 unit_prune_cgroup(u);
                 break;
 
