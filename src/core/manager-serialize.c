@@ -529,7 +529,7 @@ int manager_deserialize(Manager *m, FILE *f, FDSet *fds) {
                         (void) exec_runtime_deserialize_one(m, val, fds);
                 else if ((val = startswith(l, "subscribed="))) {
 
-                        if (strv_extend(&m->deserialized_subscribed, val) < 0)
+                        if (strv_extend(&m->subscribed_as_strv, val) < 0)
                                 return -ENOMEM;
                 } else if ((val = startswith(l, "varlink-server-socket-address="))) {
                         if (!m->varlink_server && MANAGER_IS_SYSTEM(m)) {
