@@ -4,7 +4,7 @@
 # Docs: https://packit.dev/docs/
 
 specfile_path: .packit_rpm/systemd.spec
-synced_files:
+files_to_sync:
   - .packit.yaml
   - src: .packit_rpm/systemd.spec
     dest: systemd.spec
