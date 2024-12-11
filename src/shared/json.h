@@ -363,7 +363,8 @@ typedef struct JsonDispatch {
         JsonDispatchFlags flags;
 } JsonDispatch;
 
-int json_dispatch(JsonVariant *v, const JsonDispatch table[], JsonDispatchCallback bad, JsonDispatchFlags flags, void *userdata);
+int json_dispatch_full(JsonVariant *v, const JsonDispatch table[], JsonDispatchCallback bad, JsonDispatchFlags flags, void *userdata, const char **reterr_bad_field);
+int json_dispatch(JsonVariant *v, const JsonDispatch table[], JsonDispatchFlags flags, void *userdata);
 
 int json_dispatch_string(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata);
 int json_dispatch_const_string(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata);
@@ -379,6 +380,7 @@ int json_dispatch_uint16(const char *name, JsonVariant *variant, JsonDispatchFla
 int json_dispatch_int16(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata);
 int json_dispatch_uid_gid(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata);
 int json_dispatch_user_group_name(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata);
+int json_dispatch_const_user_group_name(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata);
 int json_dispatch_id128(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata);
 int json_dispatch_unsupported(const char *name, JsonVariant *variant, JsonDispatchFlags flags, void *userdata);
 

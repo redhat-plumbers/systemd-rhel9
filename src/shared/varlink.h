@@ -107,6 +107,9 @@ int varlink_error_errno(Varlink *v, int error);
 int varlink_notify(Varlink *v, JsonVariant *parameters);
 int varlink_notifyb(Varlink *v, ...);
 
+/* Parsing incoming data via json_dispatch() and generate a nice error on parse errors */
+int varlink_dispatch(Varlink *v, JsonVariant *parameters, const JsonDispatch table[], void *userdata);
+
 /* Bind a disconnect, reply or timeout callback */
 int varlink_bind_reply(Varlink *v, VarlinkReply reply);
 
@@ -157,6 +160,8 @@ int varlink_server_set_connections_max(VarlinkServer *s, unsigned m);
 unsigned varlink_server_current_connections(VarlinkServer *s);
 
 int varlink_server_set_description(VarlinkServer *s, const char *description);
+
+int varlink_error_is_invalid_parameter(const char *error, JsonVariant *parameter, const char *name);
 
 DEFINE_TRIVIAL_CLEANUP_FUNC(Varlink *, varlink_unref);
 DEFINE_TRIVIAL_CLEANUP_FUNC(Varlink *, varlink_close_unref);
