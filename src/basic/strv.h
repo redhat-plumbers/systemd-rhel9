@@ -160,6 +160,7 @@ bool strv_overlap(char * const *a, char * const *b) _pure_;
         _STRV_FOREACH_PAIR(x, y, l, UNIQ_T(i, UNIQ))
 
 char** strv_sort(char **l);
+bool strv_equal_ignore_order(char **a, char **b);
 void strv_print(char * const *l);
 
 #define strv_from_stdarg_alloca(first)                          \
