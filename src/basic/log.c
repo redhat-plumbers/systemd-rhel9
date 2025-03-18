@@ -959,7 +959,9 @@ int log_struct_internal(
                         iovec[n++] = IOVEC_MAKE_STRING(header);
 
                         va_start(ap, format);
+                        DISABLE_WARNING_FORMAT_NONLITERAL;
                         r = log_format_iovec(iovec, ELEMENTSOF(iovec), &n, true, error, format, ap);
+                        REENABLE_WARNING;
                         if (r < 0)
                                 fallback = true;
                         else {
@@ -993,7 +995,9 @@ int log_struct_internal(
                 errno = ERRNO_VALUE(error);
 
                 va_copy(aq, ap);
+                DISABLE_WARNING_FORMAT_NONLITERAL;
                 (void) vsnprintf(buf, sizeof buf, format, aq);
+                REENABLE_WARNING;
                 va_end(aq);
 
                 if (startswith(buf, "MESSAGE=")) {
