@@ -386,46 +386,13 @@ static bool shall_clamp(sd_device *d) {
 }
 
 static int read_brightness(sd_device *device, unsigned max_brightness, unsigned *ret_brightness) {
-        const char *subsystem, *value;
+        const char *value;
         unsigned brightness;
         int r;
 
         assert(device);
         assert(ret_brightness);
 
-        r = sd_device_get_subsystem(device, &subsystem);
-        if (r < 0)
-                return log_device_debug_errno(device, r, "Failed to get subsystem: %m");
-
-        if (streq(subsystem, "backlight")) {
-                r = sd_device_get_sysattr_value(device, "actual_brightness", &value);
-                if (r == -ENOENT) {
-                        log_device_debug_errno(device, r, "Failed to read 'actual_brightness' attribute, "
-                                               "fall back to use 'brightness' attribute: %m");
-                        goto use_brightness;
-                }
-                if (r < 0)
-                        return log_device_debug_errno(device, r, "Failed to read 'actual_brightness' attribute: %m");
-
-                r = safe_atou(value, &brightness);
-                if (r < 0) {
-                        log_device_debug_errno(device, r, "Failed to parse 'actual_brightness' attribute, "
-                                               "fall back to use 'brightness' attribute: %s", value);
-                        goto use_brightness;
-                }
-
-                if (brightness > max_brightness) {
-                        log_device_debug(device, "actual_brightness=%u is larger than max_brightness=%u, "
-                                         "fall back to use 'brightness' attribute", brightness, max_brightness);
-                        goto use_brightness;
-                }
-
-                log_device_debug(device, "Current actual_brightness is %u", brightness);
-                *ret_brightness = brightness;
-                return 0;
-        }
-
-use_brightness:
         r = sd_device_get_sysattr_value(device, "brightness", &value);
         if (r < 0)
                 return log_device_debug_errno(device, r, "Failed to read 'brightness' attribute: %m");
