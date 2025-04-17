@@ -772,6 +772,13 @@ evdev:name:ETPS/2 Elantech Touchpad:dmi:*svnLENOVO:*pvrLenovoG580**
  EVDEV_ABS_35=-170:2950:24
  EVDEV_ABS_36=-591:700:25
 
+# Lenovo Yoga Slim 7 14ARE05
+evdev:name:ELAN0634:00 04F3:3124 Touchpad:dmi:*svnLENOVO:*pvrYogaSlim714ARE05**
+ EVDEV_ABS_00=::31
+ EVDEV_ABS_01=::30
+ EVDEV_ABS_35=::31
+ EVDEV_ABS_36=::30
+
 #########################################
 # Microsoft
 #########################################
@@ -941,6 +948,12 @@ evdev:input:b0003v2179p0004*
 evdev:input:b0003v172Fp0031*
  EVDEV_ABS_00=0:10000:400
  EVDEV_ABS_01=0:6250:400
+
+# WALTOP International Corp. Slim Tablet Stylus
+evdev:input:b0003v172Fp0034*
+ EVDEV_ABS_00=0:20000:80
+ EVDEV_ABS_01=0:12500:80
+ EVDEV_ABS_24=0:1023:500
 
 # WALTOP International Corp. Graphics Tablet
 evdev:input:b0003v172Fp0047*
