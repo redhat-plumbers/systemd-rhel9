@@ -1,0 +1,8 @@
+tier1-internal:
+  summary: Basic systemd tests
+  discover:
+      how: fmf
+  execute:
+      how: tmt
+  provision:
+      how: virtual
