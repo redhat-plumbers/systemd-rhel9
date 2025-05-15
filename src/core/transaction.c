@@ -926,7 +926,7 @@ int transaction_add_job_and_dependencies(
 
         bool is_new;
         Unit *dep;
-        Job *ret;
+        Job *job;
         int r;
 
         assert(tr);
@@ -981,20 +981,20 @@ int transaction_add_job_and_dependencies(
                                          job_type_to_string(type), unit->id);
 
         /* First add the job. */
-        ret = transaction_add_one_job(tr, type, unit, &is_new);
-        if (!ret)
+        job = transaction_add_one_job(tr, type, unit, &is_new);
+        if (!job)
                 return -ENOMEM;
 
-        ret->ignore_order = ret->ignore_order || ignore_order;
+        job->ignore_order = job->ignore_order || ignore_order;
 
         /* Then, add a link to the job. */
         if (by) {
-                if (!job_dependency_new(by, ret, matters, conflicts))
+                if (!job_dependency_new(by, job, matters, conflicts))
                         return -ENOMEM;
         } else {
                 /* If the job has no parent job, it is the anchor job. */
                 assert(!tr->anchor_job);
-                tr->anchor_job = ret;
+                tr->anchor_job = job;
         }
 
         if (is_new && !ignore_requirements && type != JOB_NOP) {
@@ -1002,9 +1002,9 @@ int transaction_add_job_and_dependencies(
 
                 /* If we are following some other unit, make sure we
                  * add all dependencies of everybody following. */
-                if (unit_following_set(ret->unit, &following) > 0) {
+                if (unit_following_set(job->unit, &following) > 0) {
                         SET_FOREACH(dep, following) {
-                                r = transaction_add_job_and_dependencies(tr, type, dep, ret, false, false, false, ignore_order, e);
+                                r = transaction_add_job_and_dependencies(tr, type, dep, job, false, false, false, ignore_order, e);
                                 if (r < 0) {
                                         log_unit_full_errno(dep, r == -ERFKILL ? LOG_INFO : LOG_WARNING, r,
                                                             "Cannot add dependency job, ignoring: %s",
@@ -1018,8 +1018,8 @@ int transaction_add_job_and_dependencies(
 
                 /* Finally, recursively add in all dependencies. */
                 if (IN_SET(type, JOB_START, JOB_RESTART)) {
-                        UNIT_FOREACH_DEPENDENCY(dep, ret->unit, UNIT_ATOM_PULL_IN_START) {
-                                r = transaction_add_job_and_dependencies(tr, JOB_START, dep, ret, true, false, false, ignore_order, e);
+                        UNIT_FOREACH_DEPENDENCY(dep, job->unit, UNIT_ATOM_PULL_IN_START) {
+                                r = transaction_add_job_and_dependencies(tr, JOB_START, dep, job, true, false, false, ignore_order, e);
                                 if (r < 0) {
                                         if (r != -EBADR) /* job type not applicable */
                                                 goto fail;
@@ -1028,8 +1028,8 @@ int transaction_add_job_and_dependencies(
                                 }
                         }
 
-                        UNIT_FOREACH_DEPENDENCY(dep, ret->unit, UNIT_ATOM_PULL_IN_START_IGNORED) {
-                                r = transaction_add_job_and_dependencies(tr, JOB_START, dep, ret, false, false, false, ignore_order, e);
+                        UNIT_FOREACH_DEPENDENCY(dep, job->unit, UNIT_ATOM_PULL_IN_START_IGNORED) {
+                                r = transaction_add_job_and_dependencies(tr, JOB_START, dep, job, false, false, false, ignore_order, e);
                                 if (r < 0) {
                                         /* unit masked, job type not applicable and unit not found are not considered as errors. */
                                         log_unit_full_errno(dep,
@@ -1040,8 +1040,8 @@ int transaction_add_job_and_dependencies(
                                 }
                         }
 
-                        UNIT_FOREACH_DEPENDENCY(dep, ret->unit, UNIT_ATOM_PULL_IN_VERIFY) {
-                                r = transaction_add_job_and_dependencies(tr, JOB_VERIFY_ACTIVE, dep, ret, true, false, false, ignore_order, e);
+                        UNIT_FOREACH_DEPENDENCY(dep, job->unit, UNIT_ATOM_PULL_IN_VERIFY) {
+                                r = transaction_add_job_and_dependencies(tr, JOB_VERIFY_ACTIVE, dep, job, true, false, false, ignore_order, e);
                                 if (r < 0) {
                                         if (r != -EBADR) /* job type not applicable */
                                                 goto fail;
@@ -1050,8 +1050,8 @@ int transaction_add_job_and_dependencies(
                                 }
                         }
 
-                        UNIT_FOREACH_DEPENDENCY(dep, ret->unit, UNIT_ATOM_PULL_IN_STOP) {
-                                r = transaction_add_job_and_dependencies(tr, JOB_STOP, dep, ret, true, true, false, ignore_order, e);
+                        UNIT_FOREACH_DEPENDENCY(dep, job->unit, UNIT_ATOM_PULL_IN_STOP) {
+                                r = transaction_add_job_and_dependencies(tr, JOB_STOP, dep, job, true, true, false, ignore_order, e);
                                 if (r < 0) {
                                         if (r != -EBADR) /* job type not applicable */
                                                 goto fail;
@@ -1060,8 +1060,8 @@ int transaction_add_job_and_dependencies(
                                 }
                         }
 
-                        UNIT_FOREACH_DEPENDENCY(dep, ret->unit, UNIT_ATOM_PULL_IN_STOP_IGNORED) {
-                                r = transaction_add_job_and_dependencies(tr, JOB_STOP, dep, ret, false, false, false, ignore_order, e);
+                        UNIT_FOREACH_DEPENDENCY(dep, job->unit, UNIT_ATOM_PULL_IN_STOP_IGNORED) {
+                                r = transaction_add_job_and_dependencies(tr, JOB_STOP, dep, job, false, false, false, ignore_order, e);
                                 if (r < 0) {
                                         log_unit_warning(dep,
                                                          "Cannot add dependency job, ignoring: %s",
@@ -1085,14 +1085,14 @@ int transaction_add_job_and_dependencies(
                                 atom = UNIT_ATOM_PROPAGATE_STOP;
                         }
 
-                        UNIT_FOREACH_DEPENDENCY(dep, ret->unit, atom) {
+                        UNIT_FOREACH_DEPENDENCY(dep, job->unit, atom) {
                                 JobType nt;
 
                                 nt = job_type_collapse(ptype, dep);
                                 if (nt == JOB_NOP)
                                         continue;
 
-                                r = transaction_add_job_and_dependencies(tr, nt, dep, ret, true, false, false, ignore_order, e);
+                                r = transaction_add_job_and_dependencies(tr, nt, dep, job, true, false, false, ignore_order, e);
                                 if (r < 0) {
                                         if (r != -EBADR) /* job type not applicable */
                                                 goto fail;
@@ -1103,7 +1103,7 @@ int transaction_add_job_and_dependencies(
                 }
 
                 if (type == JOB_RELOAD)
-                        transaction_add_propagate_reload_jobs(tr, ret->unit, ret, ignore_order, e);
+                        transaction_add_propagate_reload_jobs(tr, job->unit, job, ignore_order, e);
 
                 /* JOB_VERIFY_ACTIVE requires no dependency handling */
         }
