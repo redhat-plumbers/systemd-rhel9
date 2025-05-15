@@ -898,7 +898,7 @@ void transaction_add_propagate_reload_jobs(Transaction *tr, Unit *unit, Job *by,
         assert(tr);
         assert(unit);
 
-        UNIT_FOREACH_DEPENDENCY(dep, unit, UNIT_ATOM_PROPAGATES_RELOAD_TO) {
+        UNIT_FOREACH_DEPENDENCY_SAFE(dep, unit, UNIT_ATOM_PROPAGATES_RELOAD_TO) {
                 nt = job_type_collapse(JOB_TRY_RELOAD, dep);
                 if (nt == JOB_NOP)
                         continue;
@@ -1018,7 +1018,7 @@ int transaction_add_job_and_dependencies(
 
                 /* Finally, recursively add in all dependencies. */
                 if (IN_SET(type, JOB_START, JOB_RESTART)) {
-                        UNIT_FOREACH_DEPENDENCY(dep, job->unit, UNIT_ATOM_PULL_IN_START) {
+                        UNIT_FOREACH_DEPENDENCY_SAFE(dep, job->unit, UNIT_ATOM_PULL_IN_START) {
                                 r = transaction_add_job_and_dependencies(tr, JOB_START, dep, job, true, false, false, ignore_order, e);
                                 if (r < 0) {
                                         if (r != -EBADR) /* job type not applicable */
@@ -1028,7 +1028,7 @@ int transaction_add_job_and_dependencies(
                                 }
                         }
 
-                        UNIT_FOREACH_DEPENDENCY(dep, job->unit, UNIT_ATOM_PULL_IN_START_IGNORED) {
+                        UNIT_FOREACH_DEPENDENCY_SAFE(dep, job->unit, UNIT_ATOM_PULL_IN_START_IGNORED) {
                                 r = transaction_add_job_and_dependencies(tr, JOB_START, dep, job, false, false, false, ignore_order, e);
                                 if (r < 0) {
                                         /* unit masked, job type not applicable and unit not found are not considered as errors. */
@@ -1040,7 +1040,7 @@ int transaction_add_job_and_dependencies(
                                 }
                         }
 
-                        UNIT_FOREACH_DEPENDENCY(dep, job->unit, UNIT_ATOM_PULL_IN_VERIFY) {
+                        UNIT_FOREACH_DEPENDENCY_SAFE(dep, job->unit, UNIT_ATOM_PULL_IN_VERIFY) {
                                 r = transaction_add_job_and_dependencies(tr, JOB_VERIFY_ACTIVE, dep, job, true, false, false, ignore_order, e);
                                 if (r < 0) {
                                         if (r != -EBADR) /* job type not applicable */
@@ -1050,7 +1050,7 @@ int transaction_add_job_and_dependencies(
                                 }
                         }
 
-                        UNIT_FOREACH_DEPENDENCY(dep, job->unit, UNIT_ATOM_PULL_IN_STOP) {
+                        UNIT_FOREACH_DEPENDENCY_SAFE(dep, job->unit, UNIT_ATOM_PULL_IN_STOP) {
                                 r = transaction_add_job_and_dependencies(tr, JOB_STOP, dep, job, true, true, false, ignore_order, e);
                                 if (r < 0) {
                                         if (r != -EBADR) /* job type not applicable */
@@ -1060,7 +1060,7 @@ int transaction_add_job_and_dependencies(
                                 }
                         }
 
-                        UNIT_FOREACH_DEPENDENCY(dep, job->unit, UNIT_ATOM_PULL_IN_STOP_IGNORED) {
+                        UNIT_FOREACH_DEPENDENCY_SAFE(dep, job->unit, UNIT_ATOM_PULL_IN_STOP_IGNORED) {
                                 r = transaction_add_job_and_dependencies(tr, JOB_STOP, dep, job, false, false, false, ignore_order, e);
                                 if (r < 0) {
                                         log_unit_warning(dep,
@@ -1175,7 +1175,7 @@ int transaction_add_triggering_jobs(Transaction *tr, Unit *u) {
         assert(tr);
         assert(u);
 
-        UNIT_FOREACH_DEPENDENCY(trigger, u, UNIT_ATOM_TRIGGERED_BY) {
+        UNIT_FOREACH_DEPENDENCY_SAFE(trigger, u, UNIT_ATOM_TRIGGERED_BY) {
 
                 /* No need to stop inactive jobs */
                 if (UNIT_IS_INACTIVE_OR_FAILED(unit_active_state(trigger)) && !trigger->job)
