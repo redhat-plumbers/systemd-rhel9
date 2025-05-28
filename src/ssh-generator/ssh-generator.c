@@ -107,9 +107,10 @@ static int make_sshd_template_unit(
                         "[Unit]\n"
                         "Description=OpenSSH Per-Connection Server Daemon\n"
                         "Documentation=man:systemd-ssh-generator(8) man:sshd(8)\n"
+                        "\n"
                         "[Service]\n"
                         "ExecStart=-%s -i\n"
-                        "StandardInput=socket",
+                        "StandardInput=socket\n",
                         sshd_binary);
 
                 r = fflush_and_check(f);
