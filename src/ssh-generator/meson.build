@@ -10,6 +10,15 @@ executable(
         install_dir : systemgeneratordir)
 
 executable(
+        'systemd-ssh-issue',
+        'ssh-issue.c',
+        include_directories : includes,
+        link_with : [libshared],
+        install_rpath : rootpkglibdir,
+        install : true,
+        install_dir : rootlibexecdir)
+
+executable(
         'systemd-ssh-proxy',
         'ssh-proxy.c',
         include_directories : includes,
