@@ -520,6 +520,12 @@
            <listitem><para>Same as naming scheme <constant>rhel-9.5</constant>.</para></listitem>
         </varlistentry>
 
+        <varlistentry>
+           <term><constant>rhel-9.7</constant></term>
+
+           <listitem><para>Same as naming scheme <constant>rhel-9.5</constant>.</para></listitem>
+        </varlistentry>
+
       </variablelist>
 
     <para>By default <constant>rhel-9.0</constant> is used.</para>
