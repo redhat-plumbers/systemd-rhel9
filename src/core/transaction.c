@@ -382,7 +382,7 @@ static int transaction_verify_order_one(Transaction *tr, Job *j, Job *from, unsi
 
                         /* For logging below */
                         if (strv_push_pair(&array, k->unit->id, (char*) job_type_to_string(k->type)) < 0)
-                                log_oom();
+                                (void) log_oom_warning();
 
                         if (!delete && hashmap_get(tr->jobs, k->unit) && !unit_matters_to_anchor(k->unit, k))
                                 /* Ok, we can drop this one, so let's do so. */
