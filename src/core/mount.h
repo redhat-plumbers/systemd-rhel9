@@ -93,6 +93,8 @@ extern const UnitVTable mount_vtable;
 
 void mount_fd_event(Manager *m, int events);
 
+char* mount_get_where_escaped(const Mount *m);
+
 const char* mount_exec_command_to_string(MountExecCommand i) _const_;
 MountExecCommand mount_exec_command_from_string(const char *s) _pure_;
 

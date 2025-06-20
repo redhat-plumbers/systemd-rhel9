@@ -31,6 +31,7 @@
 #include "strv.h"
 #include "unit-name.h"
 #include "unit.h"
+#include "utf8.h"
 
 #define RETRY_UMOUNT_MAX 32
 
@@ -657,7 +658,11 @@ static int mount_add_extras(Mount *m) {
         path_simplify(m->where);
 
         if (!u->description) {
-                r = unit_set_description(u, m->where);
+                _cleanup_free_ char *w = mount_get_where_escaped(m);
+                if (!w)
+                        return log_oom();
+
+                r = unit_set_description(u, w);
                 if (r < 0)
                         return r;
         }
@@ -2205,6 +2210,15 @@ static int mount_can_start(Unit *u) {
         }
 
         return 1;
+}
+
+char* mount_get_where_escaped(const Mount *m) {
+        assert(m);
+
+        if (!m->where)
+                return strdup("");
+
+        return utf8_escape_invalid(m->where);
 }
 
 static const char* const mount_exec_command_table[_MOUNT_EXEC_COMMAND_MAX] = {
