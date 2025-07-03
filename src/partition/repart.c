@@ -198,6 +198,8 @@ struct Partition {
         char **copy_files;
         char **make_directories;
         EncryptMode encrypt;
+        Tpm2PCRValue *tpm2_hash_pcr_values;
+        size_t tpm2_n_hash_pcr_values;
         VerityMode verity;
         char *verity_match_key;
 
@@ -328,6 +330,7 @@ static Partition* partition_free(Partition *p) {
         free(p->format);
         strv_free(p->copy_files);
         strv_free(p->make_directories);
+        free(p->tpm2_hash_pcr_values);
         free(p->verity_match_key);
 
         free(p->roothash);
@@ -354,6 +357,7 @@ static void partition_foreignize(Partition *p) {
         p->format = mfree(p->format);
         p->copy_files = strv_free(p->copy_files);
         p->make_directories = strv_free(p->make_directories);
+        p->tpm2_hash_pcr_values = mfree(p->tpm2_hash_pcr_values);
         p->verity_match_key = mfree(p->verity_match_key);
 
         p->new_uuid = SD_ID128_NULL;
@@ -1470,6 +1474,33 @@ static int config_parse_uuid(
         return 0;
 }
 
+static int config_parse_tpm2_pcrs(
+                const char *unit,
+                const char *filename,
+                unsigned line,
+                const char *section,
+                unsigned section_line,
+                const char *lvalue,
+                int ltype,
+                const char *rvalue,
+                void *data,
+                void *userdata) {
+
+        Partition *partition = ASSERT_PTR(data);
+
+        assert(rvalue);
+
+        if (isempty(rvalue)) {
+                /* Clear existing PCR values if empty */
+                partition->tpm2_hash_pcr_values = mfree(partition->tpm2_hash_pcr_values);
+                partition->tpm2_n_hash_pcr_values = 0;
+                return 0;
+        }
+
+        return tpm2_parse_pcr_argument_append(rvalue, &partition->tpm2_hash_pcr_values,
+                                              &partition->tpm2_n_hash_pcr_values);
+}
+
 static DEFINE_CONFIG_PARSE_ENUM_WITH_DEFAULT(config_parse_verity, verity_mode, VerityMode, VERITY_OFF, "Invalid verity mode");
 
 static int partition_read_definition(Partition *p, const char *path, const char *const *conf_file_dirs) {
@@ -1498,6 +1529,7 @@ static int partition_read_definition(Partition *p, const char *path, const char 
                 { "Partition", "NoAuto",          config_parse_tristate,    0, &p->no_auto           },
                 { "Partition", "GrowFileSystem",  config_parse_tristate,    0, &p->growfs            },
                 { "Partition", "SplitName",       config_parse_string,      0, &p->split_name_format },
+                { "Partition", "TPM2PCRs",        config_parse_tpm2_pcrs,   0, p                     },
                 {}
         };
         int r;
@@ -3026,6 +3058,8 @@ static int partition_encrypt(
                 size_t secret_size, blob_size, pubkey_size = 0, srk_buf_size = 0;
                 ssize_t base64_encoded_size;
                 int keyslot;
+                Tpm2PCRValue *pcr_values = arg_tpm2_n_hash_pcr_values > 0 ? arg_tpm2_hash_pcr_values : p->tpm2_hash_pcr_values;
+                size_t n_pcr_values = arg_tpm2_n_hash_pcr_values > 0 ? arg_tpm2_n_hash_pcr_values : p->tpm2_n_hash_pcr_values;
 
                 if (arg_tpm2_public_key_pcr_mask != 0) {
                         r = tpm2_load_pcr_public_key(arg_tpm2_public_key, &pubkey, &pubkey_size);
@@ -3050,29 +3084,29 @@ static int partition_encrypt(
                                 return log_error_errno(r, "Could not convert public key to TPM2B_PUBLIC: %m");
                 }
 
-                r = tpm2_pcr_read_missing_values(tpm2_context, arg_tpm2_hash_pcr_values, arg_tpm2_n_hash_pcr_values);
+                r = tpm2_pcr_read_missing_values(tpm2_context, pcr_values, n_pcr_values);
                 if (r < 0)
                         return log_error_errno(r, "Could not read pcr values: %m");
 
                 uint16_t hash_pcr_bank = 0;
                 uint32_t hash_pcr_mask = 0;
-                if (arg_tpm2_n_hash_pcr_values > 0) {
+                if (n_pcr_values > 0) {
                         size_t hash_count;
-                        r = tpm2_pcr_values_hash_count(arg_tpm2_hash_pcr_values, arg_tpm2_n_hash_pcr_values, &hash_count);
+                        r = tpm2_pcr_values_hash_count(pcr_values, n_pcr_values, &hash_count);
                         if (r < 0)
                                 return log_error_errno(r, "Could not get hash count: %m");
 
                         if (hash_count > 1)
                                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Multiple PCR banks selected.");
 
-                        hash_pcr_bank = arg_tpm2_hash_pcr_values[0].hash;
-                        r = tpm2_pcr_values_to_mask(arg_tpm2_hash_pcr_values, arg_tpm2_n_hash_pcr_values, hash_pcr_bank, &hash_pcr_mask);
+                        hash_pcr_bank = pcr_values[0].hash;
+                        r = tpm2_pcr_values_to_mask(pcr_values, n_pcr_values, hash_pcr_bank, &hash_pcr_mask);
                         if (r < 0)
                                 return log_error_errno(r, "Could not get hash mask: %m");
                 }
 
                 TPM2B_DIGEST policy = TPM2B_DIGEST_MAKE(NULL, TPM2_SHA256_DIGEST_SIZE);
-                r = tpm2_calculate_sealing_policy(arg_tpm2_hash_pcr_values, arg_tpm2_n_hash_pcr_values, pubkey ? &public : NULL, /* use_pin= */ false, &policy);
+                r = tpm2_calculate_sealing_policy(pcr_values, n_pcr_values, pubkey ? &public : NULL, /* use_pin= */ false, &policy);
                 if (r < 0)
                         return log_error_errno(r, "Could not calculate sealing policy digest: %m");
 
