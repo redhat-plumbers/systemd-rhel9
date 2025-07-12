@@ -2159,6 +2159,7 @@ typedef struct Context {
         bool has_cursor;
         bool need_seek;
         bool since_seeked;
+        bool until_safe;
         bool ellipsized;
         bool previous_boot_id_valid;
         sd_id128_t previous_boot_id;
@@ -2186,11 +2187,10 @@ static int show(Context *c) {
                                 break;
                 }
 
-                if (arg_until_set && !arg_reverse && (arg_lines < 0 || arg_since_set || c->has_cursor)) {
+                if (arg_until_set && !c->until_safe) {
                         /* If --lines= is set, we usually rely on the n_shown to tell us when to stop.
-                         * However, if --since= or one of the cursor argument is set too, we may end up
-                         * having less than --lines= to output. In this case let's also check if the entry
-                         * is in range. */
+                         * However, in the case where we may have less than --lines= to output let's check
+                         * whether the individual entries are in range. */
 
                         usec_t usec;
 
@@ -2218,6 +2218,11 @@ static int show(Context *c) {
                                 if (r < 0)
                                         return log_error_errno(r, "Failed to seek to date: %m");
                                 c->since_seeked = true;
+
+                                /* We just jumped forward, meaning there might suddenly be less than
+                                 * --lines= to show within the --until= range, hence keep a close eye on
+                                 * timestamps from now on. */
+                                c->until_safe = false;
 
                                 c->need_seek = true;
                                 continue;
@@ -2247,6 +2252,13 @@ static int show(Context *c) {
                         r = sd_journal_get_data(j, "MESSAGE", &message, &len);
                         if (r < 0) {
                                 if (r == -ENOENT) {
+
+                                        /* We will skip some entries forward, meaning there might suddenly
+                                         * be less than --lines= to show within the --until= range, hence
+                                         * keep a close eye on timestamps from now on. */
+                                        if (!arg_reverse)
+                                                c->until_safe = false;
+
                                         c->need_seek = true;
                                         continue;
                                 }
@@ -2261,6 +2273,12 @@ static int show(Context *c) {
                         if (r < 0)
                                 return r;
                         if (r == 0) {
+                                /* We will skip some entries forward, meaning there might suddenly
+                                 * be less than --lines= to show within the --until= range, hence
+                                 * keep a close eye on timestamps from now on. */
+                                if (!arg_reverse)
+                                        c->until_safe = false;
+
                                 c->need_seek = true;
                                 continue;
                         }
@@ -2384,7 +2402,7 @@ static int setup_event(Context *c, int fd, sd_event **ret) {
 }
 
 static int run(int argc, char *argv[]) {
-        bool need_seek = false, since_seeked = false, after_cursor = false;
+        bool need_seek = false, since_seeked = false, after_cursor = false, until_safe = false;
         _cleanup_(loop_device_unrefp) LoopDevice *loop_device = NULL;
         _cleanup_(umount_and_freep) char *unlink_dir = NULL;
         _cleanup_(sd_journal_closep) sd_journal *j = NULL;
@@ -2752,10 +2770,14 @@ static int run(int argc, char *argv[]) {
                 if (r < 0)
                         return log_error_errno(r, "Failed to seek to date: %m");
 
-                if (arg_reverse)
+                if (arg_reverse) {
                         r = sd_journal_previous(j);
-                else /* arg_lines_needs_seek_end */
+                        until_safe = true; /* can't possibly go beyond --until= if --reverse */
+                } else { /* arg_lines_needs_seek_end */
                         r = sd_journal_previous_skip(j, arg_lines);
+                        until_safe = r >= arg_lines; /* We have enough lines to output before --until= is hit.
+                                                        No need to check timestamp of each journal entry */
+                }
 
         } else if (arg_reverse) {
                 r = sd_journal_seek_tail(j);
@@ -2822,6 +2844,7 @@ static int run(int argc, char *argv[]) {
                 .has_cursor = cursor,
                 .need_seek = need_seek,
                 .since_seeked = since_seeked,
+                .until_safe = until_safe,
         };
 
         if (arg_follow) {
