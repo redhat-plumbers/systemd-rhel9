@@ -116,8 +116,7 @@ static bool arg_size_auto = false;
 static JsonFormatFlags arg_json_format_flags = JSON_FORMAT_OFF;
 static PagerFlags arg_pager_flags = 0;
 static bool arg_legend = true;
-static void *arg_key = NULL;
-static size_t arg_key_size = 0;
+static struct iovec arg_key = {};
 static EVP_PKEY *arg_private_key = NULL;
 static X509 *arg_certificate = NULL;
 static char *arg_tpm2_device = NULL;
@@ -132,7 +131,7 @@ static bool arg_split = false;
 STATIC_DESTRUCTOR_REGISTER(arg_root, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_image, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_definitions, strv_freep);
-STATIC_DESTRUCTOR_REGISTER(arg_key, erase_and_freep);
+STATIC_DESTRUCTOR_REGISTER(arg_key, iovec_done_erase);
 STATIC_DESTRUCTOR_REGISTER(arg_private_key, EVP_PKEY_freep);
 STATIC_DESTRUCTOR_REGISTER(arg_certificate, X509_freep);
 STATIC_DESTRUCTOR_REGISTER(arg_tpm2_device, freep);
@@ -3011,8 +3010,8 @@ static int partition_encrypt(
                                 CRYPT_ANY_SLOT,
                                 volume_key,
                                 volume_key_size,
-                                strempty(arg_key),
-                                arg_key_size);
+                                strempty(arg_key.iov_base),
+                                arg_key.iov_len);
                 if (r < 0)
                         return log_error_errno(r, "Failed to add LUKS2 key: %m");
         }
@@ -5237,20 +5236,21 @@ static int parse_argv(int argc, char *argv[]) {
                         break;
 
                 case ARG_KEY_FILE: {
-                        _cleanup_(erase_and_freep) char *k = NULL;
-                        size_t n = 0;
+                        struct iovec key = {};
 
                         r = read_full_file_full(
-                                        AT_FDCWD, optarg, UINT64_MAX, SIZE_MAX,
+                                        AT_FDCWD, optarg,
+                                        /* offset= */ UINT64_MAX,
+                                        /* size= */ SIZE_MAX,
                                         READ_FULL_FILE_SECURE|READ_FULL_FILE_WARN_WORLD_READABLE|READ_FULL_FILE_CONNECT_SOCKET,
-                                        NULL,
-                                        &k, &n);
+                                        /* bind_name= */ NULL,
+                                        (char **) &key.iov_base,
+                                        &key.iov_len);
                         if (r < 0)
                                 return log_error_errno(r, "Failed to read key file '%s': %m", optarg);
 
-                        erase_and_free(arg_key);
-                        arg_key = TAKE_PTR(k);
-                        arg_key_size = n;
+                        iovec_done_erase(&arg_key);
+                        arg_key = key;
                         break;
                 }
 
