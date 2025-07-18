@@ -26,9 +26,11 @@ usage()
 {
     echo "Usage:"
     echo "  kernel-install [OPTIONS...] add KERNEL-VERSION KERNEL-IMAGE [INITRD-FILE...]"
-    echo "  kernel-install [OPTIONS...] remove KERNEL-VERSION"
+    echo "  kernel-install [OPTIONS...] remove KERNEL-VERSION [--entry-type...]"
     echo "  kernel-install [OPTIONS...] inspect"
     echo "Options:"
+    echo "  --entry-type type1|type2|all"
+    echo "                 Operate only on the specified bootloader entry type"
     echo "  -h, --help     Print this help and exit"
     echo "      --version  Print version string and exit"
     echo "  -v, --verbose  Increase verbosity"
@@ -371,6 +373,16 @@ case "$COMMAND" in
         ;;
 
     remove)
+        if [ "$1" = "--entry-type" ]; then
+            shift
+            if [ "$1" = "type1" ] || [ "$1" = "type2" ]; then
+                export KERNEL_INSTALL_BOOT_ENTRY_TYPE="$1"
+            elif [ "$1" != "all" ]; then
+                echo "Error: invalid --entry-type '$1'" >&2
+                exit 1
+            fi
+        fi
+
         for f in $KERNEL_INSTALL_PLUGINS; do
             log_verbose "+$f remove $KERNEL_VERSION $ENTRY_DIR_ABS"
             err=0
