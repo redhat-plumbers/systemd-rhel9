@@ -753,14 +753,16 @@ _public_ PAM_EXTERN int pam_sm_open_session(
                  * (as they otherwise even try to update it!) — but cron doesn't actually allocate a TTY for its forked
                  * off processes.) */
                 type = "unspecified";
-                class = "background";
+                if (isempty(class))
+                        class = "background";
                 tty = NULL;
 
         } else if (streq(tty, "ssh")) {
                 /* ssh has been setting PAM_TTY to "ssh" (for the same reason as cron does this, see above. For further
                  * details look for "PAM_TTY_KLUDGE" in the openssh sources). */
                 type ="tty";
-                class = "user";
+                if (isempty(class))
+                        class = "user";
                 tty = NULL; /* This one is particularly sad, as this means that ssh sessions — even though usually
                              * associated with a pty — won't be tracked by their tty in logind. This is because ssh
                              * does the PAM session registration early for new connections, and registers a pty only

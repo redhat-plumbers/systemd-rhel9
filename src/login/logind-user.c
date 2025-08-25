@@ -441,6 +441,19 @@ static int user_update_slice(User *u) {
         return 0;
 }
 
+static bool user_wants_service_manager(User *u) {
+        assert(u);
+
+        LIST_FOREACH(sessions_by_user, s, u->sessions)
+                if (s->class != SESSION_BACKGROUND_LIGHT)
+                        return true;
+
+        if (user_check_linger_file(u) > 0)
+                return true;
+
+        return false;
+}
+
 int user_start(User *u) {
         assert(u);
 
@@ -464,7 +477,8 @@ int user_start(User *u) {
         (void) user_update_slice(u);
 
         /* Start user@UID.service */
-        user_start_service(u);
+        if (user_wants_service_manager(u))
+                user_start_service(u);
 
         if (!u->started) {
                 if (!dual_timestamp_is_set(&u->timestamp))
