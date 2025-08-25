@@ -680,8 +680,9 @@ static int session_start_scope(Session *s, sd_bus_message *properties, sd_bus_er
                                 s->user->slice,
                                 description,
                                 /* These two have StopWhenUnneeded= set, hence add a dep towards them */
-                                STRV_MAKE(s->user->runtime_dir_service,
-                                          s->user->service),
+                                s->class == SESSION_BACKGROUND_LIGHT ?
+                                STRV_MAKE(s->user->runtime_dir_service) :
+                                STRV_MAKE(s->user->runtime_dir_service, s->user->service),
                                 after,
                                 user_record_home_directory(s->user->user_record),
                                 properties,
