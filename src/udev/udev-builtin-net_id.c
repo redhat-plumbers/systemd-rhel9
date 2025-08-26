@@ -442,6 +442,51 @@ static int pci_get_hotplug_slot(sd_device *dev, uint32_t *ret) {
         return -ENOENT;
 }
 
+static int get_device_firmware_node_sun(sd_device *dev, uint32_t *ret) {
+        const char *attr;
+        int r;
+
+        assert(dev);
+        assert(ret);
+
+        r = device_get_sysattr_value_filtered(dev, "firmware_node/sun", &attr);
+        if (r < 0)
+                return log_device_debug_errno(dev, r, "Failed to read firmware_node/sun, ignoring: %m");
+
+        r = safe_atou32(attr, ret);
+        if (r < 0)
+                return log_device_warning_errno(dev, r, "Failed to parse firmware_node/sun '%s', ignoring: %m", attr);
+
+        return 0;
+}
+
+static int pci_get_slot_from_firmware_node_sun(sd_device *dev, uint32_t *ret) {
+        int r;
+        sd_device *slot_dev;
+
+        assert(dev);
+        assert(ret);
+
+        /* Try getting the ACPI _SUN for the device */
+        if (get_device_firmware_node_sun(dev, ret) >= 0)
+                return 0;
+
+        r = sd_device_get_parent_with_subsystem_devtype(dev, "pci", NULL, &slot_dev);
+        if (r < 0)
+                return log_device_debug_errno(dev, r, "Failed to find pci parent, ignoring: %m");
+
+        if (is_pci_bridge(slot_dev) && is_pci_multifunction(dev) <= 0)
+                return log_device_debug_errno(dev, SYNTHETIC_ERRNO(ESTALE),
+                                              "Not using slot information because the parent pcieport "
+                                              "is a bridge and the PCI device is not multifunction.");
+
+        /* Try getting the ACPI _SUN from the parent pcieport */
+        if (get_device_firmware_node_sun(slot_dev, ret) >= 0)
+                return 0;
+
+        return -ENOENT;
+}
+
 static int dev_pci_slot(sd_device *dev, const LinkInfo *info, NetNames *names) {
         const char *sysname, *attr;
         unsigned domain, bus, slot, func;
@@ -517,13 +562,20 @@ static int dev_pci_slot(sd_device *dev, const LinkInfo *info, NetNames *names) {
                          domain, bus, slot, func, strempty(info->phys_port_name), dev_port,
                          special_glyph(SPECIAL_GLYPH_ARROW_RIGHT), empty_to_na(names->pci_path));
 
-        r = pci_get_hotplug_slot(names->pcidev, &hotplug_slot);
-        if (r < 0)
-                return r;
-        if (r > 0)
-                /* If the hotplug slot is found through the function ID, then drop the domain from the name.
-                 * See comments in parse_hotplug_slot_from_function_id(). */
-                domain = 0;
+        if (naming_scheme_has(NAMING_FIRMWARE_NODE_SUN))
+                r = pci_get_slot_from_firmware_node_sun(names->pcidev, &hotplug_slot);
+        else
+                r = -1;
+        /* If we don't find a slot using firmware_node/sun, fallback to hotplug_slot */
+        if (r < 0) {
+                r = pci_get_hotplug_slot(names->pcidev, &hotplug_slot);
+                if (r < 0)
+                        return r;
+                if (r > 0)
+                        /* If the hotplug slot is found through the function ID, then drop the domain from the name.
+                        * See comments in parse_hotplug_slot_from_function_id(). */
+                        domain = 0;
+        }
 
         s = names->pci_slot;
         l = sizeof(names->pci_slot);

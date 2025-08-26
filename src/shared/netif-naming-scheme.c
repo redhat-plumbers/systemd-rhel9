@@ -47,6 +47,7 @@ static const NamingScheme naming_schemes[] = {
         { "rhel-9.5", NAMING_RHEL_9_5 },
         { "rhel-9.6", NAMING_RHEL_9_6 },
         { "rhel-9.7", NAMING_RHEL_9_7 },
+        { "rhel-9.8", NAMING_RHEL_9_8 },
         /* … add more schemes here, as the logic to name devices is updated … */
 
         EXTRA_NET_NAMING_MAP
