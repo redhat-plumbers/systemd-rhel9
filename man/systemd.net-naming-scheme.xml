@@ -526,6 +526,13 @@
            <listitem><para>Same as naming scheme <constant>rhel-9.5</constant>.</para></listitem>
         </varlistentry>
 
+        <varlistentry>
+           <term><constant>rhel-9.8</constant></term>
+
+           <listitem>
+           <para>PCI slot number is now read from <constant>firmware_node/sun</constant> sysfs file.</para></listitem>
+        </varlistentry>
+
       </variablelist>
 
     <para>By default <constant>rhel-9.0</constant> is used.</para>
@@ -679,7 +686,7 @@ ID_NET_NAME_ONBOARD_LABEL=Ethernet Port 1
     </example>
 
     <example>
-      <title>PCI Ethernet card in hotplug slot with firmware index number</title>
+      <title>PCI Ethernet card in slot with firmware index number</title>
 
       <programlisting># /sys/devices/pci0000:00/0000:00:1c.3/0000:05:00.0/net/ens1
 ID_NET_NAME_MAC=enx000000000466
