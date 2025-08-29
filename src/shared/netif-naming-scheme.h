@@ -42,6 +42,7 @@ typedef enum NamingSchemeFlags {
                                                      * This is disabled since rhel-9.5, as it seems not to work at least for some setups. See upstream issue #28929. */
         NAMING_DEVICETREE_ALIASES        = 1 << 15, /* Generate names from devicetree aliases */
         NAMING_SR_IOV_R                  = 1 << 17, /* Use "r" suffix for SR-IOV VF representors */
+        NAMING_FIRMWARE_NODE_SUN         = 1 << 18, /* Use firmware_node/sun to get PCI slot number */
 
         /* And now the masks that combine the features above */
         NAMING_V238 = 0,
@@ -76,6 +77,7 @@ typedef enum NamingSchemeFlags {
         NAMING_RHEL_9_5 = NAMING_RHEL_9_4 & ~NAMING_BRIDGE_MULTIFUNCTION_SLOT,
         NAMING_RHEL_9_6 = NAMING_RHEL_9_5,
         NAMING_RHEL_9_7 = NAMING_RHEL_9_5,
+        NAMING_RHEL_9_8 = NAMING_RHEL_9_5 | NAMING_FIRMWARE_NODE_SUN,
 
         EXTRA_NET_NAMING_SCHEMES
 
