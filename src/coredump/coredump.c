@@ -39,6 +39,7 @@
 #include "mkdir-label.h"
 #include "namespace-util.h"
 #include "parse-util.h"
+#include "pidref.h"
 #include "process-util.h"
 #include "signal-util.h"
 #include "socket-util.h"
@@ -94,8 +95,14 @@ enum {
         META_ARGV_SIGNAL,       /* %s: number of signal causing dump */
         META_ARGV_TIMESTAMP,    /* %t: time of dump, expressed as seconds since the Epoch (we expand this to µs granularity) */
         META_ARGV_RLIMIT,       /* %c: core file size soft resource limit */
-        META_ARGV_HOSTNAME,     /* %h: hostname */
+        _META_ARGV_REQUIRED,
+        /* The fields below were added to kernel/core_pattern at later points, so they might be missing. */
+        META_ARGV_HOSTNAME = _META_ARGV_REQUIRED,  /* %h: hostname */
+        META_ARGV_DUMPABLE,     /* %d: as set by the kernel */
+        META_ARGV_PIDFD,        /* %F: pidfd of the process, since v6.16 */
         _META_ARGV_MAX,
+        /* If new fields are added, they should be added here, to maintain compatibility
+         * with callers which don't know about the new fields. */
 
         /* The following indexes are cached for a couple of special fields we use (and
          * thereby need to be retrieved quickly) for naming coredump files, and attaching
@@ -106,7 +113,7 @@ enum {
         _META_MANDATORY_MAX,
 
         /* The rest are similar to the previous ones except that we won't fail if one of
-         * them is missing. */
+         * them is missing in a message sent over the socket. */
 
         META_EXE = _META_MANDATORY_MAX,
         META_UNIT,
@@ -122,6 +129,8 @@ static const char * const meta_field_names[_META_MAX] = {
         [META_ARGV_TIMESTAMP] = "COREDUMP_TIMESTAMP=",
         [META_ARGV_RLIMIT]    = "COREDUMP_RLIMIT=",
         [META_ARGV_HOSTNAME]  = "COREDUMP_HOSTNAME=",
+        [META_ARGV_DUMPABLE]  = "COREDUMP_DUMPABLE=",
+        [META_ARGV_PIDFD]     = "COREDUMP_BY_PIDFD=",
         [META_COMM]           = "COREDUMP_COMM=",
         [META_EXE]            = "COREDUMP_EXE=",
         [META_UNIT]           = "COREDUMP_UNIT=",
@@ -129,14 +138,24 @@ static const char * const meta_field_names[_META_MAX] = {
 };
 
 typedef struct Context {
+        PidRef pidref;
         const char *meta[_META_MAX];
         size_t meta_size[_META_MAX];
         pid_t pid;
         uid_t uid;
         gid_t gid;
+        unsigned dumpable;
         bool is_pid1;
         bool is_journald;
 } Context;
+
+#define CONTEXT_NULL                            \
+        (Context) {                             \
+                .pidref = PIDREF_NULL,          \
+                .uid = UID_INVALID,             \
+                .gid = GID_INVALID,             \
+        }
+
 
 typedef enum CoredumpStorage {
         COREDUMP_STORAGE_NONE,
@@ -162,6 +181,12 @@ static uint64_t arg_external_size_max = EXTERNAL_SIZE_MAX;
 static uint64_t arg_journal_size_max = JOURNAL_SIZE_MAX;
 static uint64_t arg_keep_free = UINT64_MAX;
 static uint64_t arg_max_use = UINT64_MAX;
+
+static void context_done(Context *c) {
+        assert(c);
+
+        pidref_done(&c->pidref);
+}
 
 static int parse_config(void) {
         static const ConfigTableItem items[] = {
@@ -449,14 +474,16 @@ static int grant_user_access(int core_fd, const Context *context) {
         if (r < 0)
                 return r;
 
-        /* We allow access if we got all the data and at_secure is not set and
-         * the uid/gid matches euid/egid. */
+        /* We allow access if %d/dumpable on the command line was exactly 1, we got all the data,
+         * at_secure is not set, and the uid/gid match euid/egid. */
         bool ret =
+                context->dumpable == 1 &&
                 at_secure == 0 &&
                 uid != UID_INVALID && euid != UID_INVALID && uid == euid &&
                 gid != GID_INVALID && egid != GID_INVALID && gid == egid;
-        log_debug("Will %s access (uid="UID_FMT " euid="UID_FMT " gid="GID_FMT " egid="GID_FMT " at_secure=%s)",
+        log_debug("Will %s access (dumpable=%u uid="UID_FMT " euid="UID_FMT " gid="GID_FMT " egid="GID_FMT " at_secure=%s)",
                   ret ? "permit" : "restrict",
+                  context->dumpable,
                   uid, euid, gid, egid, yes_no(at_secure));
         return ret;
 }
@@ -1067,9 +1094,10 @@ static int save_context(Context *context, const struct iovec_wrapper *iovw) {
                 }
         }
 
-        if (!context->meta[META_ARGV_PID])
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
-                                       "Failed to find the PID of crashing process");
+        /* The basic fields from argv[] should always be there, refuse early if not */
+        for (int i = 0; i < _META_ARGV_REQUIRED; i++)
+                if (!context->meta[i])
+                        return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "A required (%s) has not been sent, aborting.", meta_field_names[i]);
 
         r = parse_pid(context->meta[META_ARGV_PID], &context->pid);
         if (r < 0)
@@ -1084,6 +1112,16 @@ static int save_context(Context *context, const struct iovec_wrapper *iovw) {
                 return log_error_errno(r, "Failed to parse GID \"%s\": %m", context->meta[META_ARGV_GID]);
 
 
+        /* The value is set to contents of /proc/sys/fs/suid_dumpable, which we set to 2,
+         * if the process is marked as not dumpable, see PR_SET_DUMPABLE(2const). */
+        if (context->meta[META_ARGV_DUMPABLE]) {
+                r = safe_atou(context->meta[META_ARGV_DUMPABLE], &context->dumpable);
+                if (r < 0)
+                        return log_error_errno(r, "Failed to parse dumpable field \"%s\": %m", context->meta[META_ARGV_DUMPABLE]);
+                if (context->dumpable > 2)
+                        log_notice("Got unexpected %%d/dumpable value %u.", context->dumpable);
+        }
+
         unit = context->meta[META_UNIT];
         context->is_pid1 = streq(context->meta[META_ARGV_PID], "1") || streq_ptr(unit, SPECIAL_INIT_SCOPE);
         context->is_journald = streq_ptr(unit, SPECIAL_JOURNALD_SERVICE);
@@ -1093,7 +1131,7 @@ static int save_context(Context *context, const struct iovec_wrapper *iovw) {
 
 static int process_socket(int fd) {
         _cleanup_close_ int input_fd = -EBADF, mntns_fd = -EBADF;
-        Context context = {};
+        _cleanup_(context_done) Context context = CONTEXT_NULL;
         struct iovec_wrapper iovw = {};
         struct iovec iovec;
         int iterations = 0, r;
@@ -1194,7 +1232,7 @@ static int process_socket(int fd) {
                 goto finish;
 
         /* Make sure we received at least all fields we need. */
-        for (int i = 0; i < _META_MANDATORY_MAX; i++)
+        for (int i = 0; i < _META_ARGV_REQUIRED; i++)
                 if (!context.meta[i]) {
                         r = log_error_errno(SYNTHETIC_ERRNO(EINVAL),
                                             "A mandatory argument (%i) has not been sent, aborting.",
@@ -1280,21 +1318,23 @@ static int gather_pid_metadata_from_argv(
                 Context *context,
                 int argc, char **argv) {
 
+        _cleanup_(pidref_done) PidRef local_pidref = PIDREF_NULL;
         _cleanup_free_ char *free_timestamp = NULL;
-        int r, signo;
-        char *t;
+        int r, signo, kernel_fd = -EBADF;
 
         /* We gather all metadata that were passed via argv[] into an array of iovecs that
-         * we'll forward to the socket unit */
+         * we'll forward to the socket unit.
+         *
+         * We require at least _META_ARGV_REQUIRED args, but will accept more.
+         * We know how to parse _META_ARGV_MAX args. The rest will be ignored. */
 
-        if (argc < _META_ARGV_MAX)
+        if (argc < _META_ARGV_REQUIRED)
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
-                                       "Not enough arguments passed by the kernel (%i, expected %i).",
-                                       argc, _META_ARGV_MAX);
+                                       "Not enough arguments passed by the kernel (%i, expected between %i and %i).",
+                                       argc, _META_ARGV_REQUIRED, _META_ARGV_MAX);
 
-        for (int i = 0; i < _META_ARGV_MAX; i++) {
-
-                t = argv[i];
+        for (int i = 0; i < MIN(argc, _META_ARGV_MAX); i++) {
+                const char *t = argv[i];
 
                 switch (i) {
 
@@ -1319,6 +1359,47 @@ static int gather_pid_metadata_from_argv(
                         break;
                 }
 
+                if (i == META_ARGV_PID) {
+                        /* Store this so that we can check whether the core will be forwarded to a container
+                         * even when the kernel doesn't provide a pidfd. Can be dropped once baseline is
+                         * >= v6.16. */
+                        r = pidref_set_pidstr(&local_pidref, t);
+                        if (r < 0)
+                                return log_error_errno(r, "Failed to initialize pidref from pid %s: %m", t);
+                }
+
+                if (i == META_ARGV_PIDFD) {
+                        /* If the current kernel doesn't support the %F specifier (which resolves to a
+                         * pidfd), but we included it in the core_pattern expression, we'll receive an empty
+                         * string here. Deal with that gracefully. */
+                        if (isempty(t))
+                                continue;
+
+                        assert(!pidref_is_set(&context->pidref));
+                        assert(kernel_fd < 0);
+
+                        kernel_fd = parse_fd(t);
+                        if (kernel_fd < 0)
+                                return log_error_errno(kernel_fd, "Failed to parse pidfd \"%s\": %m", t);
+
+                        r = pidref_set_pidfd(&context->pidref, kernel_fd);
+                        if (r < 0)
+                                return log_error_errno(r, "Failed to initialize pidref from pidfd %d: %m", kernel_fd);
+
+                        /* If there are containers involved with different versions of the code they might
+                         * not be using pidfds, so it would be wrong to set the metadata, skip it. */
+                        r = in_same_namespace(getpid_cached(), context->pidref.pid, NAMESPACE_PID);
+                        if (r < 0)
+                                log_debug_errno(r, "Failed to check pidns of crashing process, ignoring: %m");
+                        if (r <= 0)
+                                continue;
+
+                        /* We don't print the fd number in the journal as it's meaningless, but we still
+                         * record that the parsing was done with a kernel-provided fd as it means it's safe
+                         * from races, which is valuable information to provide in the journal record. */
+                        t = "1";
+                }
+
                 r = iovw_put_string_field(iovw, meta_field_names[i], t);
                 if (r < 0)
                         return r;
@@ -1326,7 +1407,19 @@ static int gather_pid_metadata_from_argv(
 
         /* Cache some of the process metadata we collected so far and that we'll need to
          * access soon */
-        return save_context(context, iovw);
+        r = save_context(context, iovw);
+        if (r < 0)
+                return r;
+
+        /* If the kernel didn't give us a PIDFD, then use the one derived from the
+         * PID immediately, given we have it. */
+        if (!pidref_is_set(&context->pidref))
+                context->pidref = TAKE_PIDREF(local_pidref);
+
+        /* Close the kernel-provided FD as the last thing after everything else succeeded. */
+        kernel_fd = safe_close(kernel_fd);
+
+        return 0;
 }
 
 static int gather_pid_metadata(struct iovec_wrapper *iovw, Context *context) {
@@ -1442,7 +1535,7 @@ static int gather_pid_metadata(struct iovec_wrapper *iovw, Context *context) {
 }
 
 static int process_kernel(int argc, char* argv[]) {
-        Context context = {};
+        _cleanup_(context_done) Context context = CONTEXT_NULL;
         struct iovec_wrapper *iovw;
         int r, mntns_fd = -EBADF;
 
@@ -1519,7 +1612,7 @@ static int process_kernel(int argc, char* argv[]) {
 }
 
 static int process_backtrace(int argc, char *argv[]) {
-        Context context = {};
+        _cleanup_(context_done) Context context = CONTEXT_NULL;
         struct iovec_wrapper *iovw;
         char *message;
         int r;
