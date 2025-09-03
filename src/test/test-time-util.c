@@ -698,7 +698,6 @@ static void test_parse_timestamp_impl(const char *tz) {
                 test_parse_timestamp_one("69-12-31 19:00:01.0010 EST", 0, USEC_PER_SEC + 1000);
         }
 
-#if 0
         /* -06 */
         test_parse_timestamp_one("Wed 1969-12-31 18:01 -06", 0, USEC_PER_MINUTE);
         test_parse_timestamp_one("Wed 1969-12-31 18:00:01 -06", 0, USEC_PER_SEC);
@@ -761,7 +760,6 @@ static void test_parse_timestamp_impl(const char *tz) {
         test_parse_timestamp_one("69-12-31 18:00:01 -06:00", 0, USEC_PER_SEC);
         test_parse_timestamp_one("69-12-31 18:00:01.001 -06:00", 0, USEC_PER_SEC + 1000);
         test_parse_timestamp_one("69-12-31 18:00:01.0010 -06:00", 0, USEC_PER_SEC + 1000);
-#endif
 
         /* without date */
         assert_se(parse_timestamp("today", &today) == 0);
@@ -977,7 +975,6 @@ TEST(timezone_offset_change) {
                 test_timezone_offset_change_one("Sun 2018-10-28 02:00:00 UTC", "Sun 2018-10-28 03:00:00 +01");
         }
 
-#if 0
         if (timezone_is_valid("Asia/Atyrau", LOG_DEBUG)) {
                 assert_se(setenv("TZ", ":Asia/Atyrau", 1) >= 0);
                 tzset();
@@ -999,7 +996,6 @@ TEST(timezone_offset_change) {
                 test_timezone_offset_change_one("Sun 1982-03-14 02:59:59 UTC", "Sat 1982-03-13 20:59:59 -06");
                 test_timezone_offset_change_one("Sun 1982-03-14 03:00:00 UTC", "Sat 1982-03-13 21:00:00 -06");
         }
-#endif
 
         assert_se(set_unset_env("TZ", tz, true) == 0);
         tzset();
