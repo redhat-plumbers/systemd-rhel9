@@ -2,6 +2,11 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 set -e
 
+#dnf install -y \
+#        https://kojihub.stream.centos.org/kojifiles/vol/koji02/packages/gnu-efi/3.0.18/4.el10/x86_64/gnu-efi-3.0.18-4.el10.x86_64.rpm \
+#        https://kojihub.stream.centos.org/kojifiles/vol/koji02/packages/gnu-efi/3.0.18/4.el10/x86_64/gnu-efi-devel-3.0.18-4.el10.x86_64.rpm \
+#        https://kojihub.stream.centos.org/kojifiles/vol/koji02/packages/gnu-efi/3.0.18/4.el10/x86_64/gnu-efi-utils-3.0.18-4.el10.x86_64.rpm
+
 # This is a build script for OS image generation using mkosi (https://github.com/systemd/mkosi).
 # Simply invoke "mkosi" in the project directory to build an OS image.
 
