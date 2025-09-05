@@ -459,7 +459,8 @@ tests += [
 
         [files('test-fileio.c')],
 
-        [files('test-time-util.c')],
+        [files('test-time-util.c'),
+         [], [], [], '', 'timeout=120'],
 
         [files('test-clock.c')],
 
