@@ -14,6 +14,7 @@
 #include "bpf-foreign.h"
 #include "bpf-socket-bind.h"
 #include "bus-common-errors.h"
+#include "bus-internal.h"
 #include "bus-util.h"
 #include "cgroup-setup.h"
 #include "cgroup-util.h"
@@ -3454,6 +3455,32 @@ int unit_load_related_unit(Unit *u, const char *type, Unit **_found) {
         return r;
 }
 
+static int signal_name_owner_changed_install_handler(sd_bus_message *message, void *userdata, sd_bus_error *error) {
+        Unit *u = ASSERT_PTR(userdata);
+        const sd_bus_error *e;
+        int r;
+
+        e = sd_bus_message_get_error(message);
+        if (!e) {
+                log_unit_trace(u, "Successfully installed NameOwnerChanged signal match.");
+                return 0;
+        }
+
+        r = sd_bus_error_get_errno(e);
+        log_unit_error_errno(u, r,
+                             "Unexpected error response on installing NameOwnerChanged signal match: %s",
+                             bus_error_message(e, r));
+
+        /* If we failed to install NameOwnerChanged signal, also unref the bus slot of GetNameOwner(). */
+        u->match_bus_slot = sd_bus_slot_unref(u->match_bus_slot);
+        u->get_name_owner_slot = sd_bus_slot_unref(u->get_name_owner_slot);
+
+        if (UNIT_VTABLE(u)->bus_name_owner_change)
+                UNIT_VTABLE(u)->bus_name_owner_change(u, NULL);
+
+        return 0;
+}
+
 static int signal_name_owner_changed(sd_bus_message *message, void *userdata, sd_bus_error *error) {
         const char *new_owner;
         Unit *u = ASSERT_PTR(userdata);
@@ -3508,7 +3535,9 @@ static int get_name_owner_handler(sd_bus_message *message, void *userdata, sd_bu
 }
 
 int unit_install_bus_match(Unit *u, sd_bus *bus, const char *name) {
+        _cleanup_(sd_bus_message_unrefp) sd_bus_message *m = NULL;
         const char *match;
+        usec_t timeout_usec = 0;
         int r;
 
         assert(u);
@@ -3518,6 +3547,12 @@ int unit_install_bus_match(Unit *u, sd_bus *bus, const char *name) {
         if (u->match_bus_slot || u->get_name_owner_slot)
                 return -EBUSY;
 
+        /* NameOwnerChanged and GetNameOwner is used to detect when a service finished starting up. The dbus
+         * call timeout shouldn't be earlier than that. If we couldn't get the start timeout, use the default
+         * value defined above. */
+        if (UNIT_VTABLE(u)->get_timeout_start_usec)
+                timeout_usec = UNIT_VTABLE(u)->get_timeout_start_usec(u);
+
         match = strjoina("type='signal',"
                          "sender='org.freedesktop.DBus',"
                          "path='/org/freedesktop/DBus',"
@@ -3525,20 +3560,39 @@ int unit_install_bus_match(Unit *u, sd_bus *bus, const char *name) {
                          "member='NameOwnerChanged',"
                          "arg0='", name, "'");
 
-        r = sd_bus_add_match_async(bus, &u->match_bus_slot, match, signal_name_owner_changed, NULL, u);
+        r = bus_add_match_full(
+                        bus,
+                        &u->match_bus_slot,
+                        /* asynchronous = */ true,
+                        match,
+                        signal_name_owner_changed,
+                        signal_name_owner_changed_install_handler,
+                        u,
+                        timeout_usec);
         if (r < 0)
                 return r;
 
-        r = sd_bus_call_method_async(
+        r = sd_bus_message_new_method_call(
                         bus,
-                        &u->get_name_owner_slot,
+                        &m,
                         "org.freedesktop.DBus",
                         "/org/freedesktop/DBus",
                         "org.freedesktop.DBus",
-                        "GetNameOwner",
+                        "GetNameOwner");
+        if (r < 0)
+                return r;
+
+        r = sd_bus_message_append(m, "s", name);
+        if (r < 0)
+                return r;
+
+        r = sd_bus_call_async(
+                        bus,
+                        &u->get_name_owner_slot,
+                        m,
                         get_name_owner_handler,
                         u,
-                        "s", name);
+                        timeout_usec);
         if (r < 0) {
                 u->match_bus_slot = sd_bus_slot_unref(u->match_bus_slot);
                 return r;
