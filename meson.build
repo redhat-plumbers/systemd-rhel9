@@ -1914,6 +1914,7 @@ catalogs = []
 
 ############################################################
 
+check_efi_alignment_py = find_program('tools/check-efi-alignment.py')
 # Include these now as they provide gnu-efi detection.
 subdir('src/fundamental')
 subdir('src/boot/efi')
