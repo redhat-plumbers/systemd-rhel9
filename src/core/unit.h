@@ -751,8 +751,8 @@ typedef struct UnitVTable {
         bool (*supported)(void);
 
         /* If this function is set, it's invoked first as part of starting a unit to allow start rate
-         * limiting checks to occur before we do anything else. */
-        int (*can_start)(Unit *u);
+         * limiting checks and unit state checks to occur before we do anything else. */
+        int (*test_startable)(Unit *u);
 
         /* The strings to print in status messages */
         UnitStatusMessageFormats status_message_formats;
