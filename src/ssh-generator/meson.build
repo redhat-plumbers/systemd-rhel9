@@ -3,6 +3,7 @@
 executable(
         'systemd-ssh-generator',
         'ssh-generator.c',
+        'ssh-util.c',
         include_directories : includes,
         link_with : [libshared],
         install_rpath : rootpkglibdir,
@@ -12,6 +13,7 @@ executable(
 executable(
         'systemd-ssh-issue',
         'ssh-issue.c',
+        'ssh-util.c',
         include_directories : includes,
         link_with : [libshared],
         install_rpath : rootpkglibdir,
