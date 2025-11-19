@@ -394,15 +394,23 @@ static void timer_enter_waiting(Timer *t, bool time_change) {
                 if (v->base == TIMER_CALENDAR) {
                         bool rebase_after_boot_time = false;
                         usec_t b;
+                        usec_t boot_monotonic = UNIT(t)->manager->timestamps[MANAGER_TIMESTAMP_USERSPACE].monotonic;
 
                         /* If we know the last time this was
                          * triggered, schedule the job based relative
                          * to that. If we don't, just start from
                          * the activation time. */
 
-                        if (dual_timestamp_is_set(&t->last_trigger))
+                        if (dual_timestamp_is_set(&t->last_trigger)) {
                                 b = t->last_trigger.realtime;
-                        else if (dual_timestamp_is_set(&UNIT(t)->inactive_exit_timestamp))
+
+                                /* Check if the last_trigger timestamp is older than the current machine
+                                 * boot. If so, this means the timestamp came from a stamp file of a
+                                 * persistent timer and we need to rebase it to make RandomizedDelaySec=
+                                 * work (see below). */
+                                if (t->last_trigger.monotonic < boot_monotonic)
+                                        rebase_after_boot_time = true;
+                        } else if (dual_timestamp_is_set(&UNIT(t)->inactive_exit_timestamp))
                                 b = UNIT(t)->inactive_exit_timestamp.realtime;
                         else {
                                 b = ts.realtime;
@@ -418,8 +426,7 @@ static void timer_enter_waiting(Timer *t, bool time_change) {
                                  * time has already passed, set the time when systemd first started as the scheduled
                                  * time. Note that we base this on the monotonic timestamp of the boot, not the
                                  * realtime one, since the wallclock might have been off during boot. */
-                                usec_t rebased = map_clock_usec(UNIT(t)->manager->timestamps[MANAGER_TIMESTAMP_USERSPACE].monotonic,
-                                                         CLOCK_MONOTONIC, CLOCK_REALTIME);
+                                usec_t rebased = map_clock_usec(boot_monotonic, CLOCK_MONOTONIC, CLOCK_REALTIME);
                                 if (v->next_elapse < rebased)
                                         v->next_elapse = rebased;
                         }
