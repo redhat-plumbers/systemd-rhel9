@@ -30,6 +30,7 @@ rules = [
                '78-sound-card.rules',
                '80-net-setup-link.rules',
                '81-net-dhcp.rules',
+               '82-net-auto-link-local.rules',
               )],
 
         [files('80-drivers.rules'),
