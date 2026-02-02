@@ -3131,7 +3131,13 @@ int unit_file_get_state(
         return unit_file_lookup_state(scope, &lp, name, ret);
 }
 
-int unit_file_exists_full(RuntimeScope scope, const LookupPaths *lp, const char *name, char **ret_path) {
+int unit_file_exists_full(
+                RuntimeScope scope,
+                const LookupPaths *lp,
+                bool follow,
+                const char *name,
+                char **ret_path) {
+
         _cleanup_(install_context_done) InstallContext c = {
                 .scope = scope,
         };
@@ -3148,7 +3154,7 @@ int unit_file_exists_full(RuntimeScope scope, const LookupPaths *lp, const char 
                         &c,
                         lp,
                         name,
-                        /* flags= */ 0,
+                        follow ? SEARCH_FOLLOW_CONFIG_SYMLINKS : 0,
                         ret_path ? &info : NULL,
                         /* changes= */ NULL,
                         /* n_changes= */ NULL);
