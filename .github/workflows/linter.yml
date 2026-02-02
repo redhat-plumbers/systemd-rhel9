@@ -35,3 +35,4 @@ jobs:
           MULTI_STATUS: false
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_GITHUB_ACTIONS: true
+          ENABLE_GITHUB_PULL_REQUEST_SUMMARY_COMMENT: false
