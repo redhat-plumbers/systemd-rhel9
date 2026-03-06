@@ -27,6 +27,8 @@
 #include <linux/videodev2.h>
 
 #include "fd-util.h"
+#include "string-util.h"
+#include "utf8.h"
 #include "util.h"
 
 int main(int argc, char *argv[]) {
@@ -66,7 +68,8 @@ int main(int argc, char *argv[]) {
         if (ioctl(fd, VIDIOC_QUERYCAP, &v2cap) == 0) {
                 int capabilities;
                 printf("ID_V4L_VERSION=2\n");
-                printf("ID_V4L_PRODUCT=%s\n", v2cap.card);
+                if (utf8_is_valid((char *)v2cap.card) && !string_has_cc((char *)v2cap.card, /* ok= */ NULL))
+                        printf("ID_V4L_PRODUCT=%s\n", v2cap.card);
                 printf("ID_V4L_CAPABILITIES=:");
                 if (v2cap.capabilities & V4L2_CAP_DEVICE_CAPS)
                         capabilities = v2cap.device_caps;
