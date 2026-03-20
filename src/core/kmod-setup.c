@@ -104,6 +104,10 @@ static bool in_vmware(void) {
 static bool in_hyperv(void) {
         return detect_vm() == VIRTUALIZATION_MICROSOFT;
 }
+
+static bool may_have_vsock_loopback(void) {
+        return may_have_virtio() || in_vmware();
+}
 #endif
 
 int kmod_setup(void) {
@@ -140,6 +144,8 @@ int kmod_setup(void) {
 
                 /* Make sure we can send sd-notify messages over vsock as early as possible. */
                 { "vmw_vsock_virtio_transport", NULL,                        false, false, may_have_virtio    },
+                /* vsock_loopback provides VMADDR_CID_LOCAL and is not a hard dep of any transport module */
+                { "vsock_loopback",             "/sys/module/vsock_loopback",   false, false, may_have_vsock_loopback   },
                 { "vmw_vsock_vmci_transport",   NULL,                        false, false, in_vmware          },
                 { "hv_sock",                    NULL,                        false, false, in_hyperv          },
 
