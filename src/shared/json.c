@@ -965,7 +965,7 @@ uint64_t json_variant_unsigned(JsonVariant *v) {
         if (!json_variant_is_regular(v))
                 goto mismatch;
         if (v->is_reference)
-                return json_variant_integer(v->reference);
+                return json_variant_unsigned(v->reference);
 
         switch (v->type) {
 
