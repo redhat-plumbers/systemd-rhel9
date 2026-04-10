@@ -26,6 +26,7 @@
 #include "strv.h"
 #include "strxcpyx.h"
 #include "udev-util.h"
+#include "utf8.h"
 #include "version.h"
 
 static const struct option options[] = {
@@ -441,7 +442,7 @@ static int scsi_id(char *maj_min_dev) {
                 }
                 if (dev_scsi.tgpt_group[0] != '\0')
                         printf("ID_TARGET_PORT=%s\n", dev_scsi.tgpt_group);
-                if (dev_scsi.unit_serial_number[0] != '\0')
+                if (dev_scsi.unit_serial_number[0] != '\0' && utf8_is_valid(dev_scsi.unit_serial_number) && !string_has_cc(dev_scsi.unit_serial_number, /* ok= */ NULL))
                         printf("ID_SCSI_SERIAL=%s\n", dev_scsi.unit_serial_number);
                 goto out;
         }
