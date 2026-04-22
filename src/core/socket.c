@@ -1838,7 +1838,7 @@ static void socket_set_state(Socket *s, SocketState state) {
         if (state != old_state)
                 log_unit_debug(UNIT(s), "Changed %s -> %s", socket_state_to_string(old_state), socket_state_to_string(state));
 
-        unit_notify(UNIT(s), state_translation_table[old_state], state_translation_table[state], 0);
+        unit_notify(UNIT(s), state_translation_table[old_state], state_translation_table[state], /* reload_success = */ true);
 }
 
 static int socket_coldplug(Unit *u) {
@@ -2490,7 +2490,7 @@ static int socket_start(Unit *u) {
 
                 /* If the service is already active we cannot start the
                  * socket */
-                if (!IN_SET(service->state, SERVICE_DEAD, SERVICE_FAILED, SERVICE_AUTO_RESTART))
+                if (!IN_SET(service->state, SERVICE_DEAD, SERVICE_FAILED, SERVICE_DEAD_BEFORE_AUTO_RESTART, SERVICE_FAILED_BEFORE_AUTO_RESTART, SERVICE_AUTO_RESTART))
                         return log_unit_error_errno(u, SYNTHETIC_ERRNO(EBUSY), "Socket service %s already active, refusing.", UNIT(service)->id);
         }
 
@@ -3293,7 +3293,7 @@ static void socket_trigger_notify(Unit *u, Unit *other) {
                 return;
 
         if (IN_SET(SERVICE(other)->state,
-                   SERVICE_DEAD, SERVICE_FAILED,
+                   SERVICE_DEAD, SERVICE_DEAD_BEFORE_AUTO_RESTART, SERVICE_FAILED, SERVICE_FAILED_BEFORE_AUTO_RESTART,
                    SERVICE_FINAL_SIGTERM, SERVICE_FINAL_SIGKILL,
                    SERVICE_AUTO_RESTART))
                socket_enter_listening(s);

@@ -90,6 +90,13 @@ typedef enum ServiceTimeoutFailureMode {
         _SERVICE_TIMEOUT_FAILURE_MODE_INVALID = -EINVAL,
 } ServiceTimeoutFailureMode;
 
+typedef enum ServiceRestartMode {
+        SERVICE_RESTART_MODE_NORMAL,
+        SERVICE_RESTART_MODE_DIRECT,
+        _SERVICE_RESTART_MODE_MAX,
+        _SERVICE_RESTART_MODE_INVALID = -EINVAL,
+} ServiceRestartMode;
+
 struct ServiceFDStore {
         Service *service;
 
@@ -107,6 +114,7 @@ struct Service {
         ServiceType type;
         ServiceExitType exit_type;
         ServiceRestart restart;
+        ServiceRestartMode restart_mode;
         ExitStatusSet restart_prevent_status;
         ExitStatusSet restart_force_status;
         ExitStatusSet success_status;
@@ -179,8 +187,6 @@ struct Service {
         bool main_pid_alien:1;
         bool bus_name_good:1;
         bool forbid_restart:1;
-        /* Keep restart intention between UNIT_FAILED and UNIT_ACTIVATING */
-        bool will_auto_restart:1;
         bool start_timeout_defined:1;
         bool exec_fd_hot:1;
 
@@ -203,7 +209,6 @@ struct Service {
         ServiceFDStore *fd_store;
         size_t n_fd_store;
         unsigned n_fd_store_max;
-        unsigned n_keep_fd_store;
 
         char *usb_function_descriptors;
         char *usb_function_strings;
@@ -238,6 +243,9 @@ void service_close_socket_fd(Service *s);
 
 const char* service_restart_to_string(ServiceRestart i) _const_;
 ServiceRestart service_restart_from_string(const char *s) _pure_;
+
+const char* service_restart_mode_to_string(ServiceRestartMode i) _const_;
+ServiceRestartMode service_restart_mode_from_string(const char *s) _pure_;
 
 const char* service_type_to_string(ServiceType i) _const_;
 ServiceType service_type_from_string(const char *s) _pure_;
