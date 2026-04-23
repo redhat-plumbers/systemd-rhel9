@@ -899,19 +899,6 @@ static int swap_start(Unit *u) {
         int r;
 
         assert(s);
-
-        /* We cannot fulfill this request right now, try again later please! */
-        if (IN_SET(s->state,
-                   SWAP_DEACTIVATING,
-                   SWAP_DEACTIVATING_SIGTERM,
-                   SWAP_DEACTIVATING_SIGKILL,
-                   SWAP_CLEANING))
-                return -EAGAIN;
-
-        /* Already on it! */
-        if (s->state == SWAP_ACTIVATING)
-                return 0;
-
         assert(IN_SET(s->state, SWAP_DEAD, SWAP_FAILED));
 
         if (detect_container() > 0)
@@ -1578,11 +1565,15 @@ static int swap_can_clean(Unit *u, ExecCleanMask *ret) {
         return exec_context_get_clean_mask(&s->exec_context, ret);
 }
 
-static int swap_can_start(Unit *u) {
+static int swap_test_startable(Unit *u) {
         Swap *s = SWAP(u);
         int r;
 
         assert(s);
+
+        /* It is already being started. */
+        if (s->state == SWAP_ACTIVATING)
+                return false;
 
         r = unit_test_start_limit(u);
         if (r < 0) {
@@ -1590,7 +1581,7 @@ static int swap_can_start(Unit *u) {
                 return r;
         }
 
-        return 1;
+        return true;
 }
 
 static const char* const swap_exec_command_table[_SWAP_EXEC_COMMAND_MAX] = {
@@ -1689,5 +1680,5 @@ const UnitVTable swap_vtable = {
                 },
         },
 
-        .can_start = swap_can_start,
+        .test_startable = swap_test_startable,
 };
