@@ -166,6 +166,8 @@ int manager_serialize(
 
         (void) serialize_ratelimit(f, "dump-ratelimit", &m->dump_ratelimit);
 
+        (void) serialize_ratelimit(f, "event-loop-ratelimit", &m->event_loop_ratelimit);
+
         bus_track_serialize(m->subscribed, f, "subscribed");
 
         r = dynamic_user_serialize(m, f, fds);
@@ -553,6 +555,8 @@ int manager_deserialize(Manager *m, FILE *f, FDSet *fds) {
                                 (void) varlink_server_deserialize_one(m->varlink_server, val, fds);
                 } else if ((val = startswith(l, "dump-ratelimit="))) {
                         deserialize_ratelimit(&m->dump_ratelimit, "dump-ratelimit", val);
+                } else if ((val = startswith(l, "event-loop-ratelimit="))) {
+                        deserialize_ratelimit(&m->event_loop_ratelimit, "event-loop-ratelimit", val);
                 } else {
                         ManagerTimestamp q;
 

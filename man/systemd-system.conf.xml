@@ -550,6 +550,21 @@
         <para>If the value is <literal>/</literal>, only labels specified with <varname>SmackProcessLabel=</varname>
         are assigned and the compile-time default is ignored.</para></listitem>
       </varlistentry>
+
+      <varlistentry>
+        <term><varname>EventLoopRateLimitIntervalSec=</varname></term>
+        <term><varname>EventLoopRateLimitBurst=</varname></term>
+
+        <listitem><para>Configures the rate limiting applied to the manager's main event loop. If the event
+        loop iterates more than <varname>EventLoopRateLimitBurst=</varname> times within
+        <varname>EventLoopRateLimitIntervalSec=</varname>, event processing is briefly paused to prevent
+        excessive CPU usage. <varname>EventLoopRateLimitIntervalSec=</varname> defaults to 1s.
+        <varname>EventLoopRateLimitBurst=</varname> defaults to 50000. These settings can also be set on the
+        kernel command line via
+        <varname>systemd.event_loop_ratelimit_interval_sec=</varname> and
+        <varname>systemd.event_loop_ratelimit_burst=</varname>.</para></listitem>
+      </varlistentry>
+
     </variablelist>
   </refsect1>
 

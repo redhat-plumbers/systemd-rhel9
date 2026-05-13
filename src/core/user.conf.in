@@ -48,3 +48,5 @@
 #DefaultLimitRTPRIO=
 #DefaultLimitRTTIME=
 #DefaultSmackProcessLabel=
+#EventLoopRateLimitIntervalSec=1s
+#EventLoopRateLimitBurst=50000
