@@ -333,6 +333,7 @@ shared_sources = files(
         'vlan-util.h',
         'volatile-util.c',
         'volatile-util.h',
+        'vsock-util.c',
         'watchdog.c',
         'watchdog.h',
         'web-util.c',

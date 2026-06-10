@@ -33,13 +33,13 @@
 #include "selinux-util.h"
 #include "service-util.h"
 #include "signal-util.h"
-#include "socket-util.h"
 #include "stat-util.h"
 #include "string-table.h"
 #include "strv.h"
 #include "user-util.h"
 #include "util.h"
 #include "virt.h"
+#include "vsock-util.h"
 
 #define VALID_DEPLOYMENT_CHARS (DIGITS LETTERS "-.:")
 
