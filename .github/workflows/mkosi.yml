@@ -48,7 +48,7 @@ permissions:
 
 jobs:
   ci:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     concurrency:
       group: ${{ github.workflow }}-${{ matrix.distro }}-${{ matrix.release }}-${{ github.ref }}
       cancel-in-progress: true
@@ -64,7 +64,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-    - uses: systemd/mkosi@070528fec478fc93af7ec057a5d2fd0045123c99
+    - uses: systemd/mkosi@857838464970f1092cc0107f4b1df714d0744990
 
     - name: Configure
       run: |
