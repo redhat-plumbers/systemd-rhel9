@@ -1036,7 +1036,7 @@ install_iscsi() {
     # Install client-side stuff ("initiator" in iSCSI jargon) - Open-iSCSI in this case
     # (open-iscsi on Debian, iscsi-initiator-utils on Fedora, etc.)
     if [[ -z "$inst" || "$inst" =~ (client|initiator) ]]; then
-        image_install iscsi-iname iscsiadm iscsid iscsistart
+        image_install iscsi-iname iscsiadm iscsid iscsistart iscsi-gen-initiatorname
         image_install -o "${ROOTLIBDIR:?}"/system/iscsi-{init,onboot,shutdown}.service
         image_install "${ROOTLIBDIR:?}"/system/iscsid.{service,socket}
         image_install "${ROOTLIBDIR:?}"/system/iscsi.service
