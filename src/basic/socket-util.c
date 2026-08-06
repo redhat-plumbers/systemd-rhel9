@@ -1573,3 +1573,117 @@ int connect_unix_path(int fd, int dir_fd, const char *path) {
 
         return RET_NERRNO(connect(fd, &sa.sa, salen));
 }
+
+int socket_address_parse_unix(SocketAddress *ret_address, const char *s) {
+        struct sockaddr_un un;
+        int r;
+
+        assert(ret_address);
+        assert(s);
+
+        if (!IN_SET(*s, '/', '@'))
+                return -EPROTO;
+
+        r = sockaddr_un_set_path(&un, s);
+        if (r < 0)
+                return r;
+
+        *ret_address = (SocketAddress) {
+                .sockaddr.un = un,
+                .size = r,
+        };
+
+        return 0;
+}
+
+int vsock_parse_port(const char *s, unsigned *ret) {
+        int r;
+
+        assert(ret);
+
+        if (!s)
+                return -EINVAL;
+
+        unsigned u;
+        r = safe_atou(s, &u);
+        if (r < 0)
+                return r;
+
+        /* Port 0 is apparently valid and not special in AF_VSOCK (unlike on IP). But VMADDR_PORT_ANY
+         * (UINT32_MAX) is. Hence refuse that. */
+
+        if (u == VMADDR_PORT_ANY)
+                return -EINVAL;
+
+        *ret = u;
+        return 0;
+}
+
+int vsock_parse_cid(const char *s, unsigned *ret) {
+        assert(ret);
+
+        if (!s)
+                return -EINVAL;
+
+        /* Parsed an AF_VSOCK "CID". This is a 32bit entity, and the usual type is "unsigned". We recognize
+         * the four special CIDs as strings, and otherwise parse the numeric CIDs. */
+
+        if (streq(s, "hypervisor"))
+                *ret = VMADDR_CID_HYPERVISOR;
+        else if (streq(s, "local"))
+                *ret = VMADDR_CID_LOCAL;
+        else if (streq(s, "host"))
+                *ret = VMADDR_CID_HOST;
+        else if (STR_IN_SET(s, "any", "-1"))
+                *ret = VMADDR_CID_ANY;
+        else
+                return safe_atou(s, ret);
+
+        return 0;
+}
+
+int socket_address_parse_vsock(SocketAddress *ret_address, const char *s) {
+        /* AF_VSOCK socket in vsock:cid:port notation */
+        _cleanup_free_ char *n = NULL;
+        char *e, *cid_start;
+        unsigned port, cid;
+        int r;
+
+        assert(ret_address);
+        assert(s);
+
+        cid_start = startswith(s, "vsock:");
+        if (!cid_start)
+                return -EPROTO;
+
+        e = strchr(cid_start, ':');
+        if (!e)
+                return -EINVAL;
+
+        r = vsock_parse_port(e+1, &port);
+        if (r < 0)
+                return r;
+
+        n = strndup(cid_start, e - cid_start);
+        if (!n)
+                return -ENOMEM;
+
+        if (isempty(n))
+                cid = VMADDR_CID_ANY;
+        else {
+                r = vsock_parse_cid(n, &cid);
+                if (r < 0)
+                        return r;
+        }
+
+        *ret_address = (SocketAddress) {
+                .sockaddr.vm = {
+                        .svm_family = AF_VSOCK,
+                        .svm_cid = cid,
+                        .svm_port = port,
+                },
+                .size = sizeof(struct sockaddr_vm),
+        };
+
+        return 0;
+}
