@@ -38,7 +38,7 @@
 #include "xattr-util.h"
 
 #define DEFAULT_DATA_HASH_TABLE_SIZE (2047ULL*sizeof(HashItem))
-#define DEFAULT_FIELD_HASH_TABLE_SIZE (333ULL*sizeof(HashItem))
+#define DEFAULT_FIELD_HASH_TABLE_SIZE (1023ULL*sizeof(HashItem))
 
 #define DEFAULT_COMPRESS_THRESHOLD (512ULL)
 #define MIN_COMPRESS_THRESHOLD (8ULL)
