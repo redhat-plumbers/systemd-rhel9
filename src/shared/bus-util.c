@@ -238,7 +238,7 @@ int bus_connect_user_systemd(sd_bus **ret_bus) {
 
         e = secure_getenv("XDG_RUNTIME_DIR");
         if (!e)
-                return sd_bus_default_user(ret_bus);
+                return -ENOMEDIUM;
 
         ee = bus_address_escape(e);
         if (!ee)
