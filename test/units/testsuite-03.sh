@@ -105,13 +105,10 @@ ELAPSED=$((END_SEC-START_SEC))
 
 # Test time-limited scopes
 START_SEC=$(date -u '+%s')
-set +e
-systemd-run --scope --property=RuntimeMaxSec=3s sleep 10
-RESULT=$?
+(! systemd-run --scope --property=RuntimeMaxSec=3s sleep 10)
 END_SEC=$(date -u '+%s')
 ELAPSED=$((END_SEC-START_SEC))
 [[ "$ELAPSED" -ge 3 ]] && [[ "$ELAPSED" -le 5 ]] || exit 1
-[[ "$RESULT" -ne 0 ]] || exit 1
 
 # Test restart mode direct
 systemctl start succeeds-on-restart-restartdirect.target
@@ -125,5 +122,7 @@ assert_rc 3 systemctl --quiet is-active succeeds-on-restart.target
 
 systemctl start fails-on-restart.target || :
 assert_rc 3 systemctl --quiet is-active fails-on-restart.target
+
+systemctl stop fails-on-restart.service
 
 touch /testok
