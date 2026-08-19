@@ -15,6 +15,8 @@ at_exit() {
 
 trap at_exit EXIT
 
+systemctl unmask systemd-resolved.service
+systemctl enable systemd-resolved.service
 mkdir -p /run/systemd/system/systemd-resolved.service.d/
 cat >/run/systemd/system/systemd-resolved.service.d/99-start-limit.conf <<EOF
 [Unit]
