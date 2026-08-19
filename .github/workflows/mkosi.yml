@@ -66,6 +66,16 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
     - uses: systemd/mkosi@857838464970f1092cc0107f4b1df714d0744990
 
+    - name: Install GPG keys for Fedora 42
+      run: |
+        sudo mkdir -p /usr/share/distribution-gpg-keys
+        sudo apt-get install -y curl cpio rpm2cpio
+        tmpdir=$(mktemp -d)
+        curl -sL https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/42/Server/x86_64/os/Packages/f/fedora-gpg-keys-42-1.noarch.rpm |
+          rpm2cpio | cpio -idmv -D "$tmpdir"
+        sudo mv "$tmpdir/etc/pki/rpm-gpg" /usr/share/distribution-gpg-keys/fedora
+        rm -rf "$tmpdir"
+
     - name: Configure
       run: |
         tee mkosi.local.conf <<EOF
