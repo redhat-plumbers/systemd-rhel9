@@ -588,12 +588,14 @@ static void unit_clear_dependencies(Unit *u) {
                                 hashmap_remove(other_deps, u);
 
                         unit_add_to_gc_queue(other);
+                        other->dependency_generation++;
                 }
 
                 hashmap_free(deps);
         }
 
         u->dependencies = hashmap_free(u->dependencies);
+        u->dependency_generation++;
 }
 
 static void unit_remove_transient(Unit *u) {
@@ -1103,6 +1105,9 @@ static void unit_merge_dependencies(Unit *u, Unit *other) {
         }
 
         other->dependencies = hashmap_free(other->dependencies);
+
+        u->dependency_generation++;
+        other->dependency_generation++;
 }
 
 int unit_merge(Unit *u, Unit *other) {
@@ -2166,17 +2171,17 @@ static void retroactively_start_dependencies(Unit *u) {
         assert(u);
         assert(UNIT_IS_ACTIVE_OR_ACTIVATING(unit_active_state(u)));
 
-        UNIT_FOREACH_DEPENDENCY(other, u, UNIT_ATOM_RETROACTIVE_START_REPLACE) /* Requires= + BindsTo= */
+        UNIT_FOREACH_DEPENDENCY_SAFE(other, u, UNIT_ATOM_RETROACTIVE_START_REPLACE) /* Requires= + BindsTo= */
                 if (!unit_has_dependency(u, UNIT_ATOM_AFTER, other) &&
                     !UNIT_IS_ACTIVE_OR_ACTIVATING(unit_active_state(other)))
                         manager_add_job(u->manager, JOB_START, other, JOB_REPLACE, NULL, NULL, NULL);
 
-        UNIT_FOREACH_DEPENDENCY(other, u, UNIT_ATOM_RETROACTIVE_START_FAIL) /* Wants= */
+        UNIT_FOREACH_DEPENDENCY_SAFE(other, u, UNIT_ATOM_RETROACTIVE_START_FAIL) /* Wants= */
                 if (!unit_has_dependency(u, UNIT_ATOM_AFTER, other) &&
                     !UNIT_IS_ACTIVE_OR_ACTIVATING(unit_active_state(other)))
                         manager_add_job(u->manager, JOB_START, other, JOB_FAIL, NULL, NULL, NULL);
 
-        UNIT_FOREACH_DEPENDENCY(other, u, UNIT_ATOM_RETROACTIVE_STOP_ON_START) /* Conflicts= (and inverse) */
+        UNIT_FOREACH_DEPENDENCY_SAFE(other, u, UNIT_ATOM_RETROACTIVE_STOP_ON_START) /* Conflicts= (and inverse) */
                 if (!UNIT_IS_INACTIVE_OR_DEACTIVATING(unit_active_state(other)))
                         manager_add_job(u->manager, JOB_STOP, other, JOB_REPLACE, NULL, NULL, NULL);
 }
@@ -2188,7 +2193,7 @@ static void retroactively_stop_dependencies(Unit *u) {
         assert(UNIT_IS_INACTIVE_OR_DEACTIVATING(unit_active_state(u)));
 
         /* Pull down units which are bound to us recursively if enabled */
-        UNIT_FOREACH_DEPENDENCY(other, u, UNIT_ATOM_RETROACTIVE_STOP_ON_STOP) /* BoundBy= */
+        UNIT_FOREACH_DEPENDENCY_SAFE(other, u, UNIT_ATOM_RETROACTIVE_STOP_ON_STOP) /* BoundBy= */
                 if (!UNIT_IS_INACTIVE_OR_DEACTIVATING(unit_active_state(other)))
                         manager_add_job(u->manager, JOB_STOP, other, JOB_REPLACE, NULL, NULL, NULL);
 }
@@ -2209,7 +2214,7 @@ void unit_start_on_failure(
 
         /* Act on OnFailure= and OnSuccess= dependencies */
 
-        UNIT_FOREACH_DEPENDENCY(other, u, atom) {
+        UNIT_FOREACH_DEPENDENCY_SAFE(other, u, atom) {
                 _cleanup_(sd_bus_error_free) sd_bus_error error = SD_BUS_ERROR_NULL;
 
                 if (n_jobs < 0) {
@@ -2235,7 +2240,7 @@ void unit_trigger_notify(Unit *u) {
 
         assert(u);
 
-        UNIT_FOREACH_DEPENDENCY(other, u, UNIT_ATOM_TRIGGERED_BY)
+        UNIT_FOREACH_DEPENDENCY_SAFE(other, u, UNIT_ATOM_TRIGGERED_BY)
                 if (UNIT_VTABLE(other)->trigger_notify)
                         UNIT_VTABLE(other)->trigger_notify(other, u);
 }
@@ -3114,6 +3119,7 @@ static int unit_add_dependency_impl(
                         return r;
 
                 flags = NOTIFY_DEPENDENCY_UPDATE_FROM;
+                u->dependency_generation++;
         }
 
         if (other_info.data != other_info_old.data) {
@@ -3130,6 +3136,7 @@ static int unit_add_dependency_impl(
                 }
 
                 flags |= NOTIFY_DEPENDENCY_UPDATE_TO;
+                other->dependency_generation++;
         }
 
         return flags;
@@ -5348,6 +5355,9 @@ void unit_remove_dependencies(Unit *u, UnitDependencyMask mask) {
 
                                 /* The unit 'other' may not be wanted by the unit 'u'. */
                                 unit_submit_to_stop_when_unneeded_queue(other);
+
+                                u->dependency_generation++;
+                                other->dependency_generation++;
 
                                 done = false;
                                 break;
