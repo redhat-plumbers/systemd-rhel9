@@ -287,6 +287,17 @@
         <para>Note that this option is specific to Red Hat Enterprise Linux 9 and is not available in upstream
         systemd. It will not be supported in newer Red Hat Enterprise Linux versions.</para></listitem>
       </varlistentry>
+
+      <varlistentry>
+        <term><varname>systemd.rhel.gpt_auto_var=</varname></term>
+
+        <listitem><para>Takes a boolean argument or enables the option if specified without an argument.
+        If disabled, automatic discovery of the variable data partition based on GPT partition type is
+        disabled, i.e. <filename>/var/</filename> is not mounted automatically. Defaults to enabled.</para>
+
+        <para>Note that this option is specific to Red Hat Enterprise Linux 9 and is not available in upstream
+        systemd. It will not be supported in newer Red Hat Enterprise Linux versions.</para></listitem>
+      </varlistentry>
     </variablelist>
   </refsect1>
 
