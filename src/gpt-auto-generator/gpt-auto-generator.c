@@ -43,6 +43,7 @@ static bool arg_root_enabled = true;
 static bool arg_swap_enabled = true;
 static bool arg_rhel_home_enabled = true;
 static bool arg_rhel_var_enabled = true;
+static bool arg_rhel_srv_enabled = true;
 static int arg_root_rw = -1;
 
 static int add_cryptsetup(
@@ -708,7 +709,7 @@ static int enumerate_partitions(dev_t devnum) {
                         r = k;
         }
 
-        if (m->partitions[PARTITION_SRV].found) {
+        if (m->partitions[PARTITION_SRV].found && arg_rhel_srv_enabled) {
                 k = add_partition_mount(m->partitions + PARTITION_SRV, "srv", "/srv", "Server Data Partition");
                 if (k < 0)
                         r = k;
@@ -848,6 +849,17 @@ static int parse_proc_cmdline_item(const char *key, const char *value, void *dat
 
                 if (!arg_rhel_var_enabled)
                         log_debug("Disabling var partition auto-detection, systemd.rhel.gpt_auto_var=no is defined.");
+
+        } else if (proc_cmdline_key_streq(key, "systemd.rhel.gpt_auto_srv")) {
+
+                r = value ? parse_boolean(value) : 1;
+                if (r < 0)
+                        log_warning_errno(r, "Failed to parse gpt-auto srv switch \"%s\", ignoring: %m", value);
+                else
+                        arg_rhel_srv_enabled = r;
+
+                if (!arg_rhel_srv_enabled)
+                        log_debug("Disabling srv partition auto-detection, systemd.rhel.gpt_auto_srv=no is defined.");
 
         }
 
