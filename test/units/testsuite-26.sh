@@ -227,6 +227,13 @@ systemctl show -P Markers "$UNIT_NAME" | grep needs-restart
 systemctl reload-or-restart --marked
 (! systemctl show -P Markers "$UNIT_NAME" | grep needs-restart)
 
+# needs-restart should be silently ignored on inactive units (D-Bus)
+systemctl stop "$UNIT_NAME"
+systemctl set-property "$UNIT_NAME" "Markers=needs-restart"
+(! systemctl show -P Markers "$UNIT_NAME" | grep needs-restart)
+systemctl set-property "$UNIT_NAME" "Markers=+needs-restart"
+(! systemctl show -P Markers "$UNIT_NAME" | grep needs-restart)
+
 # --dry-run with destructive verbs
 # kexec is skipped intentionally, as it requires a bit more involved setup
 VERBS=(

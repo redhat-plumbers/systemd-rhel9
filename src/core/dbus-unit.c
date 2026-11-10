@@ -1989,6 +1989,13 @@ static int bus_unit_set_live_property(
                         return sd_bus_error_set(error, BUS_ERROR_BAD_UNIT_SETTING, "Bad marker syntax.");
 
                 if (!UNIT_WRITE_FLAGS_NOOP(flags)) {
+                        /* If the unit is not active or activating, setting needs-restart should be noop. */
+                        if (FLAGS_SET(settings, 1u << UNIT_MARKER_NEEDS_RESTART) &&
+                            !UNIT_IS_ACTIVE_OR_ACTIVATING(unit_active_state(u))) {
+                                log_unit_debug(u, "Ignoring needs-restart marker: unit is not active.");
+                                settings &= ~(1u << UNIT_MARKER_NEEDS_RESTART);
+                        }
+
                         if (some_absolute)
                                 u->markers = settings;
                         else
