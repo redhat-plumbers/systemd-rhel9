@@ -16,8 +16,6 @@
 #include "string-util.h"
 #include "tests.h"
 
-static bool arg_keep = false;
-
 static void test_journal_flush_one(int argc, char *argv[]) {
         _cleanup_(mmap_cache_unrefp) MMapCache *m = NULL;
         _cleanup_free_ char *fn = NULL;
@@ -120,8 +118,6 @@ TEST(journal_flush_compact) {
 }
 
 static int intro(void) {
-        arg_keep = saved_argc > 1;
-
         /* managed_journal_file_open requires a valid machine id */
         if (sd_id128_get_machine(NULL) < 0)
                 return log_tests_skipped("/etc/machine-id not found");
