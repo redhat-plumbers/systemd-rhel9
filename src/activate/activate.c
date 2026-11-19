@@ -28,7 +28,6 @@
 static char **arg_listen = NULL;
 static bool arg_accept = false;
 static int arg_socket_type = SOCK_STREAM;
-static char **arg_args = NULL;
 static char **arg_setenv = NULL;
 static char **arg_fdnames = NULL;
 static bool arg_inetd = false;
@@ -426,8 +425,6 @@ static int parse_argv(int argc, char *argv[]) {
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
                                        "Datagram sockets do not accept connections. "
                                        "The --datagram and --accept options may not be combined.");
-
-        arg_args = argv + optind;
 
         return 1 /* work to do */;
 }
