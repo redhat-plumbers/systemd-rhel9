@@ -9,13 +9,13 @@
 
 #define MAX_SECTIONS 96
 
-static const uint8_t dos_file_magic[2] = "MZ";
+__attribute__((nonstring)) static const uint8_t dos_file_magic[2] = "MZ";
 static const uint8_t pe_file_magic[4] = "PE\0\0";
 
 static const uint8_t name_osrel[8] = ".osrel";
 static const uint8_t name_linux[8] = ".linux";
 static const uint8_t name_initrd[8] = ".initrd";
-static const uint8_t name_cmdline[8] = ".cmdline";
+__attribute__((nonstring)) static const uint8_t name_cmdline[8] = ".cmdline";
 static const uint8_t name_uname[8] = ".uname";
 
 static int pe_sections(FILE *uki, struct PeSectionHeader **ret, size_t *ret_n) {
