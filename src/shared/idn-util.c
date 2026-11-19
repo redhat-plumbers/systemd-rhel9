@@ -17,7 +17,7 @@ static void* idn_dl = NULL;
 
 #if HAVE_LIBIDN2
 int (*sym_idn2_lookup_u8)(const uint8_t* src, uint8_t** lookupname, int flags) = NULL;
-const char *(*sym_idn2_strerror)(int rc) _const_ = NULL;
+typeof(&idn2_strerror) sym_idn2_strerror = NULL;
 int (*sym_idn2_to_unicode_8z8z)(const char * input, char ** output, int flags) = NULL;
 
 int dlopen_idn(void) {
