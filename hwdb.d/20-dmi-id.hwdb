@@ -31,3 +31,10 @@ dmi:bvnLENOVO*
 # Microsoft Surface 1's chassis type
 dmi:bvnMicrosoft Corporation*:pvrSurface with Windows 8 Pro*
  ID_CHASSIS=tablet
+
+# Supermicro servers report "Super Server" as the system product name,
+# which is meaningless. The real model lives on the base board (DMI type 2).
+dmi:*:svnSupermicro:pnSuper Server:*
+dmi:*:svnSupermicro:pnSuperServer:*
+ ID_PRODUCT_NAME_IS_RUBBISH=1
+ ID_PRODUCT_VERSION_IS_RUBBISH=1
