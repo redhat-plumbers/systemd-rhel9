@@ -530,7 +530,7 @@ __attribute__((noinline)) void debug_break(void) {
 
 #ifdef EFI_DEBUG
 void hexdump(const char16_t *prefix, const void *data, size_t size) {
-        static const char hex[16] = "0123456789abcdef";
+        static const char hex[] = "0123456789abcdef";
         _cleanup_free_ char16_t *buf = NULL;
         const uint8_t *d = data;
 
